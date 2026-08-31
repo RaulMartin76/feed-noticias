@@ -34,7 +34,7 @@ class AIEnricher:
                     api_key = ""
         self.api_key = api_key
         self.client = None
-        self.preferred_models = ["gemini-3.6-flash", "gemini-3.5-flash"]
+        self.preferred_models = ["gemini-3.6-flash", "gemini-3.5-flash", "gemini-2.5-flash", "gemini-flash-latest"]
         if GENAI_AVAILABLE and self.api_key:
             try:
                 self.client = genai.Client(api_key=self.api_key)
