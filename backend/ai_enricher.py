@@ -34,12 +34,36 @@ class AIEnricher:
                     api_key = ""
         self.api_key = api_key
         self.client = None
+        self.preferred_models = ["gemini-3.6-flash", "gemini-3.5-flash"]
         if GENAI_AVAILABLE and self.api_key:
             try:
                 self.client = genai.Client(api_key=self.api_key)
             except Exception as e:
                 print(f"[AIEnricher] Error al inicializar cliente Gemini: {e}")
                 self.client = None
+
+    def _generate(self, contents: str, config: Optional[Any] = None) -> Optional[str]:
+        """Intenta generar contenido probando secuencialmente los modelos disponibles."""
+        if not self.client:
+            return None
+        for model_name in self.preferred_models:
+            try:
+                if config:
+                    resp = self.client.models.generate_content(
+                        model=model_name,
+                        contents=contents,
+                        config=config
+                    )
+                else:
+                    resp = self.client.models.generate_content(
+                        model=model_name,
+                        contents=contents
+                    )
+                if resp and resp.text:
+                    return resp.text
+            except Exception as e:
+                print(f"[AIEnricher] Intento con {model_name} falló: {e}")
+        return None
 
     def enrich_item(self, item: Dict[str, Any]) -> Dict[str, Any]:
         """
@@ -76,16 +100,15 @@ Responde exclusivamente en formato JSON válido con la siguiente estructura:
   "summary": "Resumen ejecutivo en 2-3 viñetas concisas",
   "hashtags": ["#Hashtag1", "#Hashtag2"]
 }}"""
-                response = self.client.models.generate_content(
-                    model="gemini-flash-latest",
+                gen_text = self._generate(
                     contents=prompt,
                     config=types.GenerateContentConfig(
                         response_mime_type="application/json",
                         temperature=0.2
                     )
                 )
-                if response.text:
-                    data = json.loads(response.text)
+                if gen_text:
+                    data = json.loads(gen_text)
                     if item.get("category") != "FONDOS ALTERNATIVOS":
                         item["category"] = data.get("category", item.get("category", "Banca Privada"))
                     item["sentiment"] = data.get("sentiment", "Neutro")
@@ -157,12 +180,9 @@ Noticias Disponibles:
 
 Pregunta del Asesor: {query}"""
 
-                response = self.client.models.generate_content(
-                    model="gemini-flash-latest",
-                    contents=prompt
-                )
-                if response.text:
-                    return response.text
+                gen_text = self._generate(contents=prompt)
+                if gen_text:
+                    return gen_text
             except Exception as e:
                 print(f"[AIEnricher] Fallback RAG por error Gemini: {e}")
 
@@ -218,12 +238,9 @@ Estructura requerida:
 ## ⚡ ESPECIAL FONDOS ALTERNATIVOS & MERCADOS PRIVADOS
 ## 💡 IMPLICACIONES PARA CLIENTES DE BANCA PRIVADA BANCO MEDIOLANUM
 """
-                response = self.client.models.generate_content(
-                    model="gemini-flash-latest",
-                    contents=prompt
-                )
-                if response.text:
-                    return response.text
+                gen_text = self._generate(contents=prompt)
+                if gen_text:
+                    return gen_text
             except Exception as e:
                 print(f"[AIEnricher] Fallback Digest por error Gemini: {e}")
 
