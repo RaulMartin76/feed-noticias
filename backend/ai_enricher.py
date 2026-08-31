@@ -168,12 +168,13 @@ Responde exclusivamente en formato JSON válido con la siguiente estructura:
         if self.client and news_items:
             try:
                 context_str = ""
-                for idx, item in enumerate(news_items[:10], 1):
+                for idx, item in enumerate(news_items[:25], 1):
                     context_str += f"\n[{idx}] Título: {item['title']}\nFuente: {item['source']}\nCategoría: {item['category']}\nURL: {item['url']}\nResumen: {item['summary']}\n"
                 
                 prompt = f"""Eres un analista de banca privada experto de Banco Mediolanum. 
-Responde a la siguiente consulta del usuario apoyándote exclusivamente en la colección de noticias proporcionada.
-Incluye enlaces markdown a las fuentes de las noticias mencionadas.
+Responde a la siguiente consulta del usuario apoyándote en la colección de noticias financieras proporcionada.
+Si la información no aparece en las noticias, indícalo cortésmente y ofrece contexto general relacionado con el mercado financiero.
+Incluye enlaces markdown a las fuentes de las noticias mencionadas siempre que sea posible.
 
 Noticias Disponibles:
 {context_str}

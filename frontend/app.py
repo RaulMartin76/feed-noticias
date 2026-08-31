@@ -46,6 +46,9 @@ if "just_synced" not in st.session_state:
 if "last_updated" not in st.session_state:
     st.session_state["last_updated"] = datetime.now().strftime("%H:%M:%S")
 
+if "chat_history" not in st.session_state:
+    st.session_state["chat_history"] = []
+
 # Cargar favoritos desde la base de datos
 st.session_state["favorites"] = db.get_favorites()
 
@@ -932,11 +935,61 @@ with tab_chat:
     st.markdown("### 🤖 Asistente de Inteligencia sobre el Feed")
     st.caption("Respuesta contextual inmediata basada en el feed diario analizado por Google Gemini 3.6 Flash.")
     
-    user_query = st.text_input("Consulta normativas, entidades, mercados o temas globales:", placeholder="ej. ¿Qué impacto tiene la directiva RIS, Private Equity o acontecimientos globales?")
-    if st.button("Consultar Asistente Terminal", type="primary") and user_query:
+    # Sugerencias rápidas
+    st.markdown("**💡 Consultas sugeridas:**")
+    q_col1, q_col2, q_col3 = st.columns(3)
+    quick_query = None
+    with q_col1:
+        if st.button("⚡ Fondos Alternativos & PE", use_container_width=True, key="quick_alt"):
+            quick_query = "¿Cuáles son las principales novedades y oportunidades en Fondos Alternativos y Mercados Privados hoy?"
+    with q_col2:
+        if st.button("⚖️ Novedades Normativas RIS", use_container_width=True, key="quick_reg"):
+            quick_query = "¿Qué novedades normativas, regulación o alertas regulatorias destacan en el feed?"
+    with q_col3:
+        if st.button("🏛️ Movimientos Banca Privada", use_container_width=True, key="quick_pb"):
+            quick_query = "¿Qué fichajes, entidades o movimientos estratégicos se mencionan en Banca Privada?"
+
+    # Formulario de entrada (permite pulsar Enter o hacer clic)
+    with st.form(key="chat_rag_form", clear_on_submit=True):
+        f_col1, f_col2 = st.columns([5, 1])
+        with f_col1:
+            form_query = st.text_input(
+                "Pregunta al asistente:",
+                placeholder="Escribe tu consulta y pulsa Enter (ej. ¿Qué impacto tiene la directiva RIS?)...",
+                label_visibility="collapsed"
+            )
+        with f_col2:
+            submit_btn = st.form_submit_button("🚀 Consultar", type="primary", use_container_width=True)
+
+    query_to_process = None
+    if quick_query:
+        query_to_process = quick_query
+    elif submit_btn and form_query.strip():
+        query_to_process = form_query.strip()
+
+    if query_to_process:
         with st.spinner("Procesando consulta con Google Gemini 3.6 Flash..."):
-            answer = enricher.ask_feed(user_query, news_data)
-            st.markdown(answer)
+            answer = enricher.ask_feed(query_to_process, news_data)
+            st.session_state["chat_history"].append({"user": query_to_process, "assistant": answer, "time": datetime.now().strftime("%H:%M")})
+
+    # Mostrar historial de conversación
+    if st.session_state["chat_history"]:
+        st.markdown("---")
+        h_col1, h_col2 = st.columns([5, 1])
+        with h_col1:
+            st.markdown("#### 💬 Conversación")
+        with h_col2:
+            if st.button("🗑️ Limpiar Chat", use_container_width=True, key="clear_chat_btn"):
+                st.session_state["chat_history"] = []
+                st.rerun()
+
+        for idx, chat in enumerate(reversed(st.session_state["chat_history"])):
+            with st.chat_message("user"):
+                st.markdown(f"**{chat['user']}** <span style='font-size:0.75rem; opacity:0.6;'>({chat.get('time', '')})</span>", unsafe_allow_html=True)
+            with st.chat_message("assistant", avatar="🤖"):
+                st.markdown(chat["assistant"])
+    else:
+        st.info("💡 Haz una pregunta en el recuadro superior o pulsa cualquiera de las consultas sugeridas para comenzar.")
 
 # Pestaña 3: Mis Favoritos
 with tab_favorites:
