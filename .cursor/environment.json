@@ -1,0 +1,16 @@
+{
+  "name": "Terminal Financiero & Feed de Noticias",
+  "install": "python3 -m pip install --user -r requirements.txt",
+  "terminals": [
+    {
+      "name": "streamlit",
+      "command": "python3 -m streamlit run frontend/app.py --server.port=8501 --server.address=0.0.0.0 --server.headless=true"
+    }
+  ],
+  "ports": [
+    {
+      "name": "Streamlit App",
+      "port": 8501
+    }
+  ]
+}
