@@ -48,6 +48,22 @@ class DatabaseManager:
             """)
             
             cursor.execute("""
+            CREATE TABLE IF NOT EXISTS reddit_discussions (
+                id TEXT PRIMARY KEY,
+                title TEXT NOT NULL,
+                url TEXT NOT NULL,
+                subreddit TEXT NOT NULL,
+                author TEXT NOT NULL,
+                date TEXT NOT NULL,
+                summary TEXT NOT NULL,
+                sentiment TEXT,
+                sentiment_badge TEXT,
+                hashtags TEXT,
+                saved_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+            """)
+            
+            cursor.execute("""
             CREATE TABLE IF NOT EXISTS favorites (
                 news_id TEXT PRIMARY KEY,
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -95,6 +111,47 @@ class DatabaseManager:
                 item = dict(row)
                 item["hashtags"] = json.loads(item["hashtags"]) if item["hashtags"] else []
                 item["entities"] = json.loads(item["entities"]) if item["entities"] else []
+                result.append(item)
+            return result
+
+    # --- MÉTODOS PARA REDDIT ---
+    def clear_all_reddit(self):
+        with self._get_connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute("DELETE FROM reddit_discussions")
+            conn.commit()
+
+    def save_reddit_items(self, items: List[Dict[str, Any]]):
+        with self._get_connection() as conn:
+            cursor = conn.cursor()
+            for item in items:
+                cursor.execute("""
+                INSERT OR REPLACE INTO reddit_discussions (id, title, url, subreddit, author, date, summary, sentiment, sentiment_badge, hashtags)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                """, (
+                    item.get("id"),
+                    item.get("title"),
+                    item.get("url"),
+                    item.get("subreddit", "r/AI"),
+                    item.get("author", "u/anon"),
+                    item.get("date"),
+                    item.get("summary"),
+                    item.get("sentiment", "Tendencia"),
+                    item.get("sentiment_badge", "🔥 Viral"),
+                    json.dumps(item.get("hashtags", []))
+                ))
+            conn.commit()
+
+    def get_all_reddit(self) -> List[Dict[str, Any]]:
+        with self._get_connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute("SELECT * FROM reddit_discussions ORDER BY date DESC, saved_at DESC")
+            rows = cursor.fetchall()
+            
+            result = []
+            for row in rows:
+                item = dict(row)
+                item["hashtags"] = json.loads(item["hashtags"]) if item["hashtags"] else []
                 result.append(item)
             return result
 

@@ -15,11 +15,12 @@ if PROJECT_ROOT not in sys.path:
     sys.path.insert(0, PROJECT_ROOT)
 
 from backend.scraper import fetch_live_news
+from backend.reddit_scraper import fetch_top_reddit_discussions
 from backend.ai_enricher import AIEnricher
 from backend.db_manager import DatabaseManager
 
 st.set_page_config(
-    page_title="VADEMECUM HUB NEWS • Radar de IA & Robótica",
+    page_title="VADEMECUM HUB NEWS • Radar de IA, Robótica & Reddit",
     page_icon="⚡",
     layout="wide",
     initial_sidebar_state="expanded"
@@ -34,6 +35,9 @@ if "theme" not in st.session_state:
 
 if "selected_tag" not in st.session_state:
     st.session_state["selected_tag"] = "Todos"
+
+if "selected_reddit_sub" not in st.session_state:
+    st.session_state["selected_reddit_sub"] = "Todos"
 
 if "just_synced" not in st.session_state:
     st.session_state["just_synced"] = False
@@ -75,7 +79,7 @@ else:
     </div>
     """, unsafe_allow_html=True)
 
-# Selector de Tema (Vademecum Dark vs Parchment Light)
+# Selector de Tema
 theme_mode = st.sidebar.radio(
     "🎨 Estilo Visual",
     ["🌙 Vademecum Dark", "☀️ Vademecum Light"],
@@ -85,7 +89,7 @@ theme_mode = st.sidebar.radio(
 st.session_state["theme"] = "dark" if "Dark" in theme_mode else "light"
 is_dark = st.session_state["theme"] == "dark"
 
-# SISTEMA DE DISEÑO VADEMECUM HUB (Inspirado en la paleta oficial: #0e0d0c, #f4efe6, #c9a227, #2e2a24, #161411)
+# SISTEMA DE DISEÑO VADEMECUM HUB (Paleta oficial: #0e0d0c, #f4efe6, #c9a227, #2e2a24, #161411)
 if is_dark:
     st.markdown("""
     <style>
@@ -94,7 +98,6 @@ if is_dark:
         :root {
             --bg-vademecum: #0e0d0c;
             --surface-vademecum: #161411;
-            --card-vademecum: #181512;
             --border-vademecum: #2e2a24;
             --accent-gold: #c9a227;
             --accent-gold-hover: #e5be38;
@@ -148,7 +151,6 @@ if is_dark:
             outline: none !important;
         }
 
-        /* Ambient Hero Header Vademecum */
         .vademecum-hero {
             background: radial-gradient(ellipse 90% 80% at 50% -20%, rgba(201, 162, 39, 0.14), transparent 60%),
                         radial-gradient(ellipse 60% 50% at 100% 30%, rgba(47, 111, 106, 0.12), transparent 50%),
@@ -200,10 +202,6 @@ if is_dark:
             padding: 10px 18px;
             gap: 16px;
         }
-        .vademecum-date-item {
-            display: flex;
-            flex-direction: column;
-        }
         .vademecum-date-label {
             font-size: 0.70rem;
             text-transform: uppercase;
@@ -218,7 +216,6 @@ if is_dark:
             font-family: 'IBM Plex Mono', monospace;
         }
 
-        /* KPI Cards Vademecum */
         .vademecum-kpi-card {
             background: var(--surface-vademecum);
             border: 1px solid var(--border-vademecum);
@@ -247,7 +244,6 @@ if is_dark:
             margin-top: 4px;
         }
 
-        /* News Cards Vademecum */
         .vademecum-card {
             background: var(--surface-vademecum);
             border: 1px solid var(--border-vademecum);
@@ -269,9 +265,15 @@ if is_dark:
             border: 1px solid rgba(201, 162, 39, 0.6) !important;
             box-shadow: 0 4px 24px rgba(201, 162, 39, 0.12) !important;
         }
-        .vademecum-card-robotics:hover {
-            border-color: var(--accent-gold-hover) !important;
-            box-shadow: 0 10px 32px rgba(201, 162, 39, 0.25) !important;
+
+        .vademecum-card-reddit {
+            background: linear-gradient(135deg, rgba(26, 20, 15, 0.92) 0%, rgba(22, 20, 17, 0.95) 100%) !important;
+            border: 1px solid rgba(255, 69, 0, 0.35) !important;
+            box-shadow: 0 4px 24px rgba(255, 69, 0, 0.08) !important;
+        }
+        .vademecum-card-reddit:hover {
+            border-color: #ff4500 !important;
+            box-shadow: 0 10px 32px rgba(255, 69, 0, 0.25) !important;
         }
 
         /* Badges Vademecum */
@@ -283,6 +285,17 @@ if is_dark:
             border-radius: 8px;
             font-size: 0.78rem;
             font-weight: 600;
+            display: inline-block;
+            margin-right: 8px;
+        }
+        .badge-reddit {
+            background: rgba(255, 69, 0, 0.15);
+            border: 1px solid rgba(255, 69, 0, 0.45);
+            color: #ff6e40;
+            padding: 5px 12px;
+            border-radius: 8px;
+            font-size: 0.78rem;
+            font-weight: 800;
             display: inline-block;
             margin-right: 8px;
         }
@@ -365,7 +378,7 @@ if is_dark:
     </style>
     """, unsafe_allow_html=True)
 else:
-    # MODO VADEMECUM LIGHT (Tech Parchment)
+    # MODO VADEMECUM LIGHT
     st.markdown("""
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500;600&display=swap');
@@ -494,6 +507,15 @@ else:
             border: 1px solid #d4af37 !important;
         }
 
+        .vademecum-card-reddit {
+            background: #ffffff !important;
+            border: 1px solid #fed7aa !important;
+        }
+        .vademecum-card-reddit:hover {
+            border-color: #ff4500 !important;
+            box-shadow: 0 8px 24px rgba(255, 69, 0, 0.15) !important;
+        }
+
         .badge-source {
             background: #f5f2eb;
             border: 1px solid var(--border-vademecum);
@@ -502,6 +524,17 @@ else:
             border-radius: 8px;
             font-size: 0.78rem;
             font-weight: 600;
+            display: inline-block;
+            margin-right: 8px;
+        }
+        .badge-reddit {
+            background: #fff7ed;
+            border: 1px solid #ffedd5;
+            color: #ea580c;
+            padding: 5px 12px;
+            border-radius: 8px;
+            font-size: 0.78rem;
+            font-weight: 800;
             display: inline-block;
             margin-right: 8px;
         }
@@ -556,9 +589,9 @@ last_update_str = st.session_state["last_updated"]
 st.markdown(f"""
 <div class="vademecum-hero">
     <div>
-        <div class="vademecum-eyebrow">VADEMECUM HUB • RADAR DE INTELIGENCIA ESTRATÉGICA</div>
+        <div class="vademecum-eyebrow">VADEMECUM HUB • RADAR DE INTELIGENCIA ESTRATÉGICA & COMUNIDAD</div>
         <div class="vademecum-title">VADEMECUM HUB <span>NEWS</span></div>
-        <div class="vademecum-subtitle">Inteligencia Global en Tiempo Real para Consultoría de IA • Modelos • Hardware • <b style="color: #c9a227;">ROBÓTICA & EMBODIED AI</b></div>
+        <div class="vademecum-subtitle">Inteligencia Global en Tiempo Real • Medios Especializados • <b style="color: #ff6e40;">REDDIT AI PULSE</b> • <b style="color: #c9a227;">ROBÓTICA & EMBODIED AI</b></div>
     </div>
     <div class="vademecum-dates-box">
         <div class="vademecum-date-item">
@@ -575,48 +608,62 @@ st.markdown(f"""
 """, unsafe_allow_html=True)
 
 if st.session_state["just_synced"]:
-    st.toast("⚡ Vademecum Hub News resincronizado con éxito desde fuentes globales", icon="🚀")
-    st.success("Vademecum Hub News resincronizado con éxito desde fuentes globales de IA y Robótica.")
+    st.toast("⚡ Vademecum Hub News & Reddit resincronizados con éxito", icon="🚀")
+    st.success("Vademecum Hub News resincronizado con éxito desde medios globales y subreddits de IA.")
     st.session_state["just_synced"] = False
 
-# Cargar y sincronizar datos
-def load_and_sync_vademecum_data(force_sync: bool = False):
+# Cargar datos de Medios y de Reddit
+def load_and_sync_all_data(force_sync: bool = False):
     enricher = AIEnricher()
     existing_news = []
+    existing_reddit = []
     
     try:
         existing_news = db.get_all_news()
+        existing_reddit = db.get_all_reddit()
     except Exception as e:
         print(f"[Vademecum] Error leyendo SQLite: {e}")
         existing_news = []
+        existing_reddit = []
     
     if not existing_news or force_sync:
         try:
             if force_sync:
                 db.clear_all_news()
-                
             raw_news = fetch_live_news()
             enriched = [enricher.enrich_item(item) for item in raw_news]
             db.save_news_items(enriched)
             existing_news = db.get_all_news()
             st.session_state["last_updated"] = datetime.now().strftime("%H:%M:%S")
         except Exception as e_sync:
-            print(f"[Vademecum] Excepción en sincronización, cargando respaldo: {e_sync}")
+            print(f"[Vademecum] Excepción en sincronización noticias, usando semilla: {e_sync}")
             from backend.scraper import SEED_NEWS
             existing_news = SEED_NEWS
-            
-    return existing_news, enricher
 
-# Botón de Sincronización en Sidebar
-if st.sidebar.button("🔄 Sincronizar Radar Vademecum", use_container_width=True, type="primary"):
-    with st.spinner("Rastreando portales globales de IA y enriqueciendo con Gemini AI..."):
-        news_data, enricher = load_and_sync_vademecum_data(force_sync=True)
+    if not existing_reddit or force_sync:
+        try:
+            if force_sync:
+                db.clear_all_reddit()
+            raw_reddit = fetch_top_reddit_discussions()
+            db.save_reddit_items(raw_reddit)
+            existing_reddit = db.get_all_reddit()
+        except Exception as e_red:
+            print(f"[Vademecum] Excepción en sincronización reddit, usando semilla: {e_red}")
+            from backend.reddit_scraper import SEED_REDDIT_DISCUSSIONS
+            existing_reddit = SEED_REDDIT_DISCUSSIONS
+            
+    return existing_news, existing_reddit, enricher
+
+# Botón de Sincronización Global
+if st.sidebar.button("🔄 Sincronizar Radar & Reddit", use_container_width=True, type="primary"):
+    with st.spinner("Rastreando portales de IA y debates más votados en Reddit..."):
+        news_data, reddit_data, enricher = load_and_sync_all_data(force_sync=True)
         st.session_state["just_synced"] = True
         st.rerun()
 else:
-    news_data, enricher = load_and_sync_vademecum_data(force_sync=False)
+    news_data, reddit_data, enricher = load_and_sync_all_data(force_sync=False)
 
-search_term = st.sidebar.text_input("🔍 Búsqueda global en Vademecum", placeholder="ej. Humanoides, Blackwell, MCP, LangGraph, EU AI Act...")
+search_term = st.sidebar.text_input("🔍 Búsqueda global", placeholder="ej. r/LocalLLaMA, Humanoides, Blackwell, MCP, o3...")
 
 sources = ["Todas"] + sorted(list(set(item["source"] for item in news_data if item.get("source"))))
 selected_source = st.sidebar.selectbox("🌐 Fuente tecnológica", sources)
@@ -640,15 +687,7 @@ st.sidebar.markdown(f"""
 <div style="background: {sidebar_card_bg}; border: 1px solid {sidebar_card_border}; border-radius: 10px; padding: 14px; margin-bottom: 15px;">
     <div style="font-size: 0.76rem; color: #c9a227; font-weight: 700; text-transform: uppercase;">🤖 Inteligencia Artificial</div>
     <div style="font-size: 0.9rem; color: {ai_status_color}; font-weight: 700; margin-top: 4px;">{ai_status_text}</div>
-    <div style="font-size: 0.82rem; color: #a8a29e; margin-top: 8px;">💾 BD Local: <b>{len(news_data)} análisis guardados</b></div>
-</div>
-""", unsafe_allow_html=True)
-
-st.sidebar.markdown(f"""
-<div style="background: {sidebar_card_bg}; border: 1px solid {sidebar_card_border}; border-radius: 10px; padding: 14px;">
-    <div style="font-size: 0.74rem; color: #a8a29e; font-weight: 700; text-transform: uppercase;">⚡ Plataforma</div>
-    <div style="font-size: 0.88rem; color: {sidebar_title_color}; font-weight: 700; margin-top: 2px;">Vademecum Hub</div>
-    <div style="font-size: 0.78rem; color: #c9a227; font-weight: 600;">Consultoría & Formación IA</div>
+    <div style="font-size: 0.82rem; color: #a8a29e; margin-top: 8px;">💾 BD: <b>{len(news_data)} noticias + {len(reddit_data)} hilos Reddit</b></div>
 </div>
 """, unsafe_allow_html=True)
 
@@ -657,11 +696,18 @@ col_k1, col_k2, col_k3, col_k4 = st.columns(4)
 with col_k1:
     st.markdown(f"""
     <div class="vademecum-kpi-card">
-        <div class="vademecum-kpi-label">Novedades Hoy</div>
+        <div class="vademecum-kpi-label">Noticias Tech Hoy</div>
         <div class="vademecum-kpi-value">{len(news_data)}</div>
     </div>
     """, unsafe_allow_html=True)
 with col_k2:
+    st.markdown(f"""
+    <div class="vademecum-kpi-card" style="border-color: rgba(255, 69, 0, 0.45);">
+        <div class="vademecum-kpi-label" style="color: #ff6e40;">Debates Reddit AI 💬</div>
+        <div class="vademecum-kpi-value" style="color: #ff6e40;">{len(reddit_data)}</div>
+    </div>
+    """, unsafe_allow_html=True)
+with col_k3:
     robotics_count = sum(1 for item in news_data if item.get("category") == "ROBÓTICA & EMBODIED AI")
     st.markdown(f"""
     <div class="vademecum-kpi-card" style="border-color: rgba(201, 162, 39, 0.6);">
@@ -669,20 +715,12 @@ with col_k2:
         <div class="vademecum-kpi-value" style="color: #c9a227;">{robotics_count}</div>
     </div>
     """, unsafe_allow_html=True)
-with col_k3:
+with col_k4:
     fav_count = len(st.session_state["favorites"])
     st.markdown(f"""
     <div class="vademecum-kpi-card">
-        <div class="vademecum-kpi-label">Artículos Guardados ⭐</div>
+        <div class="vademecum-kpi-label">Guardados ⭐</div>
         <div class="vademecum-kpi-value" style="color: #e5be38;">{fav_count}</div>
-    </div>
-    """, unsafe_allow_html=True)
-with col_k4:
-    sources_count = len(set(item["source"] for item in news_data if item.get("source")))
-    st.markdown(f"""
-    <div class="vademecum-kpi-card">
-        <div class="vademecum-kpi-label">Fuentes Globales 🌐</div>
-        <div class="vademecum-kpi-value" style="color: #2f6f6a;">{sources_count}</div>
     </div>
     """, unsafe_allow_html=True)
 
@@ -691,54 +729,21 @@ st.markdown("<br>", unsafe_allow_html=True)
 # Tendencias Rápidas
 st.markdown("##### 🔥 Temáticas de Vanguardia en Vademecum:")
 tag_cols = st.columns(6)
-all_tags = ["Todos", "#Robótica", "#LLMs", "#HardwareNVIDIA", "#AgentesIA", "#EUAIAct"]
+all_tags = ["Todos", "#Robótica", "#LLMs", "#LocalLLM", "#HardwareNVIDIA", "#MCP"]
 for i, tag in enumerate(all_tags):
     if tag_cols[i].button(tag, key=f"btn_vademecum_tag_{i}", use_container_width=True):
         st.session_state["selected_tag"] = tag
 
 # Pestañas Principales
-tab_feed, tab_chat, tab_favorites, tab_digest = st.tabs([
+tab_feed, tab_reddit, tab_chat, tab_favorites, tab_digest = st.tabs([
     "📰 Radar Vademecum", 
+    "💬 Pulso Reddit (Comunidad IA)", 
     "🤖 Asistente Vademecum (Chat RAG)", 
-    "⭐ Artículos Guardados", 
+    "⭐ Elementos Guardados", 
     "📝 Vademecum Daily Briefing"
 ])
 
-# Filtrado de Noticias
-filtered_news = news_data
-unique_news = []
-seen_ids = set()
-for item in filtered_news:
-    if item["id"] not in seen_ids:
-        seen_ids.add(item["id"])
-        unique_news.append(item)
-filtered_news = unique_news
-
-if st.session_state["selected_tag"] != "Todos":
-    tag_clean = st.session_state["selected_tag"]
-    filtered_news = [item for item in filtered_news if tag_clean in item.get("hashtags", [])]
-
-if search_term:
-    search_lower = search_term.lower()
-    filtered_news = [
-        item for item in filtered_news 
-        if search_lower in item.get("title", "").lower() 
-        or search_lower in item.get("summary", "").lower()
-        or search_lower in item.get("source", "").lower()
-        or search_lower in item.get("category", "").lower()
-        or any(search_lower in tag.lower() for tag in item.get("hashtags", []))
-    ]
-
-if selected_source != "Todas":
-    filtered_news = [item for item in filtered_news if item.get("source") == selected_source]
-
-if selected_category != "Todas":
-    filtered_news = [item for item in filtered_news if item.get("category") == selected_category]
-
-if selected_sentiment != "Todos":
-    filtered_news = [item for item in filtered_news if item.get("sentiment") == selected_sentiment]
-
-# Función para renderizar tarjeta Vademecum
+# Renderizado de Tarjeta de Noticias
 def render_vademecum_card(item: dict, key_prefix: str = "feed"):
     is_robotics = item.get("category") == "ROBÓTICA & EMBODIED AI"
     card_class = "vademecum-card vademecum-card-robotics" if is_robotics else "vademecum-card"
@@ -808,6 +813,97 @@ def render_vademecum_card(item: dict, key_prefix: str = "feed"):
                 st.toast(f"Artículo guardado en Vademecum", icon="⭐")
             st.rerun()
 
+# Renderizado de Tarjeta de Debate de Reddit
+def render_reddit_card(item: dict, key_prefix: str = "reddit"):
+    card_class = "vademecum-card vademecum-card-reddit"
+    is_fav = item["id"] in st.session_state["favorites"]
+    fav_icon = "⭐ Guardado" if is_fav else "☆ Guardar"
+    
+    author_clean = item.get("author", "u/anon")
+    if author_clean.startswith("u//u/"):
+        author_clean = author_clean.replace("u//u/", "u/")
+    elif not author_clean.startswith("u/"):
+        author_clean = f"u/{author_clean}"
+
+    c_card, c_action = st.columns([0.88, 0.12])
+    with c_card:
+        hashtags_display = ' '.join(item.get('hashtags', [])) if isinstance(item.get('hashtags'), list) else ""
+        action_btn_style = "text-decoration: none; font-weight: 700; color: #ff6e40; font-size: 0.88rem; background: rgba(255, 69, 0, 0.12); padding: 6px 14px; border-radius: 8px; border: 1px solid rgba(255, 69, 0, 0.4);" if is_dark else "text-decoration: none; font-weight: 700; color: #ea580c; font-size: 0.88rem; background: #fff7ed; padding: 6px 14px; border-radius: 8px; border: 1px solid #fed7aa;"
+        tag_color = "#ff6e40" if is_dark else "#ea580c"
+        date_color = "#a8a29e" if is_dark else "#78716c"
+        
+        st.markdown(f"""
+        <div class="{card_class}">
+            <div style="display: flex; align-items: center; justify-content: space-between;">
+                <div>
+                    <span class="badge-reddit">🟠 {item.get('subreddit', 'r/AI')}</span>
+                    <span class="badge-category">{item.get('sentiment_badge', '🔥 Viral')}</span>
+                    <span style="font-size: 0.8rem; color: #a8a29e; font-weight: 600;">👤 {author_clean}</span>
+                </div>
+                <div style="font-size: 0.82rem; color: {date_color}; font-weight: 600; font-family: 'IBM Plex Mono', monospace;">
+                    📅 {item.get('date', today_date_str)}
+                </div>
+            </div>
+            
+            <a href="{item.get('url', '#')}" target="_blank" class="news-title-link">
+                {item.get('title', 'Sin título')}
+            </a>
+            
+            <div class="news-summary-text">
+                {item.get('summary', '')}
+            </div>
+            
+            <div style="margin-top: 16px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px;">
+                <div style="font-size: 0.82rem; color: {tag_color}; font-weight: 700;">
+                    {hashtags_display}
+                </div>
+                <a href="{item.get('url', '#')}" target="_blank" style="{action_btn_style}">
+                    💬 Ver Conversación en Reddit ↗
+                </a>
+            </div>
+        </div>
+        """, unsafe_allow_html=True)
+        
+    with c_action:
+        st.markdown("<div style='height: 24px;'></div>", unsafe_allow_html=True)
+        btn_key = f"reddit_fav_{key_prefix}_{item['id']}"
+        if st.button(fav_icon, key=btn_key, use_container_width=True):
+            if is_fav:
+                db.remove_favorite(item["id"])
+                st.session_state["favorites"].remove(item["id"])
+                st.toast(f"Debate eliminado de guardados", icon="🗑️")
+            else:
+                db.add_favorite(item["id"])
+                st.session_state["favorites"].append(item["id"])
+                st.toast(f"Debate de Reddit guardado", icon="⭐")
+            st.rerun()
+
+# Filtrado de Noticias
+filtered_news = news_data
+if st.session_state["selected_tag"] != "Todos":
+    tag_clean = st.session_state["selected_tag"]
+    filtered_news = [item for item in filtered_news if tag_clean in item.get("hashtags", [])]
+
+if search_term:
+    search_lower = search_term.lower()
+    filtered_news = [
+        item for item in filtered_news 
+        if search_lower in item.get("title", "").lower() 
+        or search_lower in item.get("summary", "").lower()
+        or search_lower in item.get("source", "").lower()
+        or search_lower in item.get("category", "").lower()
+        or any(search_lower in tag.lower() for tag in item.get("hashtags", []))
+    ]
+
+if selected_source != "Todas":
+    filtered_news = [item for item in filtered_news if item.get("source") == selected_source]
+
+if selected_category != "Todas":
+    filtered_news = [item for item in filtered_news if item.get("category") == selected_category]
+
+if selected_sentiment != "Todos":
+    filtered_news = [item for item in filtered_news if item.get("sentiment") == selected_sentiment]
+
 # PESTAÑA 1: RADAR VADEMECUM
 with tab_feed:
     st.markdown(f"#### 📡 **{len(filtered_news)}** novedades tecnológicas en el Radar")
@@ -817,36 +913,74 @@ with tab_feed:
         for item in filtered_news:
             render_vademecum_card(item, key_prefix="main_feed")
 
-# PESTAÑA 2: ASISTENTE VADEMECUM (CHAT RAG)
+# PESTAÑA 2: PULSO REDDIT
+with tab_reddit:
+    st.markdown("### 💬 Pulso de la Comunidad de IA en Reddit")
+    st.markdown("Discusiones más votadas en **r/LocalLLaMA, r/MachineLearning, r/singularity, r/robotics, r/OpenAI y r/ClaudeAI**. Extracción de debates centrales y síntesis de consenso.")
+    
+    # Subreddit selector
+    reddit_subs = ["Todos", "r/LocalLLaMA", "r/OpenAI", "r/ClaudeAI", "r/singularity", "r/robotics", "r/MachineLearning"]
+    col_sub_select, col_sub_badge = st.columns([0.6, 0.4])
+    with col_sub_select:
+        sel_sub = st.selectbox("Subreddit", reddit_subs, key="reddit_sub_selector")
+    with col_sub_badge:
+        sel_badge = st.selectbox("Tipo de Debate", ["Todos", "🔥 Viral", "🛠️ Técnico", "💡 Innovación", "⚠️ Crítica / Bug", "🦾 Robótica"], key="reddit_badge_selector")
+        
+    filtered_reddit = reddit_data
+    if sel_sub != "Todos":
+        filtered_reddit = [r for r in filtered_reddit if r.get("subreddit", "").lower() == sel_sub.lower()]
+    if sel_badge != "Todos":
+        filtered_reddit = [r for r in filtered_reddit if sel_badge in r.get("sentiment_badge", "")]
+        
+    if search_term:
+        s_lower = search_term.lower()
+        filtered_reddit = [
+            r for r in filtered_reddit 
+            if s_lower in r.get("title", "").lower() 
+            or s_lower in r.get("summary", "").lower() 
+            or s_lower in r.get("subreddit", "").lower()
+            or any(s_lower in t.lower() for t in r.get("hashtags", []))
+        ]
+        
+    st.markdown(f"Mostrando **{len(filtered_reddit)} debates activos de la comunidad:**")
+    if not filtered_reddit:
+        st.info("No hay hilos de Reddit que coincidan con los filtros seleccionados.")
+    else:
+        for r_item in filtered_reddit:
+            render_reddit_card(r_item, key_prefix="reddit_feed")
+
+# PESTAÑA 3: ASISTENTE VADEMECUM (CHAT RAG)
 with tab_chat:
     st.markdown("### 🤖 Asistente de Consultoría Vademecum Hub")
-    st.markdown("Analiza la colección de noticias para resolver dudas técnicas, comparar arquitecturas de modelos o evaluar impacto de negocio para clientes de consultoría.")
+    st.markdown("Analiza la colección de noticias y los debates de la comunidad de Reddit para evaluar arquitecturas, benchmarks reales o impacto de negocio.")
     
     col_q1, col_q2 = st.columns(2)
     with col_q1:
-        if st.button("🦾 ¿Qué avances recientes hay en robots humanoides y manipulación?", use_container_width=True, key="vad_sug_1"):
-            st.session_state["chat_history"].append({"role": "user", "text": "¿Qué avances recientes hay en robots humanoides y manipulación industrial?"})
-            with st.spinner("Consultando fuentes con Gemini AI..."):
-                ans = enricher.ask_feed("¿Qué avances recientes hay en robots humanoides y manipulación industrial?", news_data)
+        if st.button("💬 ¿Qué se está diciendo en Reddit sobre modelos de razonamiento y matemática?", use_container_width=True, key="vad_sug_red_1"):
+            st.session_state["chat_history"].append({"role": "user", "text": "¿Qué se está diciendo en Reddit sobre modelos de razonamiento y matemática de OpenAI?"})
+            with st.spinner("Analizando debates de Reddit con Gemini AI..."):
+                combined_context = news_data + reddit_data
+                ans = enricher.ask_feed("¿Qué se está diciendo en Reddit sobre modelos de razonamiento y matemática de OpenAI?", combined_context)
                 st.session_state["chat_history"].append({"role": "assistant", "text": ans})
                 st.rerun()
-        if st.button("💻 ¿Cuáles son las novedades en GPUs, clusters y hardware NVIDIA?", use_container_width=True, key="vad_sug_2"):
-            st.session_state["chat_history"].append({"role": "user", "text": "¿Cuáles son las novedades en GPUs, clusters y hardware NVIDIA?"})
-            with st.spinner("Consultando fuentes con Gemini AI..."):
-                ans = enricher.ask_feed("¿Cuáles son las novedades en GPUs, clusters y hardware NVIDIA?", news_data)
+        if st.button("💻 ¿Qué opina la comunidad de r/LocalLLaMA sobre hardware e inferencia local?", use_container_width=True, key="vad_sug_red_2"):
+            st.session_state["chat_history"].append({"role": "user", "text": "¿Qué opina la comunidad de r/LocalLLaMA sobre hardware e inferencia local?"})
+            with st.spinner("Consultando hilos de r/LocalLLaMA..."):
+                combined_context = news_data + reddit_data
+                ans = enricher.ask_feed("¿Qué opina la comunidad de r/LocalLLaMA sobre hardware e inferencia local?", combined_context)
                 st.session_state["chat_history"].append({"role": "assistant", "text": ans})
                 st.rerun()
     with col_q2:
         if st.button("🛠️ ¿Cómo impacta Model Context Protocol (MCP) en arquitecturas de agentes?", use_container_width=True, key="vad_sug_3"):
             st.session_state["chat_history"].append({"role": "user", "text": "¿Cómo impacta Model Context Protocol (MCP) en arquitecturas de agentes?"})
-            with st.spinner("Consultando fuentes con Gemini AI..."):
+            with st.spinner("Analizando con Gemini AI..."):
                 ans = enricher.ask_feed("¿Cómo impacta Model Context Protocol (MCP) en arquitecturas de agentes?", news_data)
                 st.session_state["chat_history"].append({"role": "assistant", "text": ans})
                 st.rerun()
-        if st.button("⚖️ ¿Qué requisitos exige el EU AI Act para sistemas en clientes corporativos?", use_container_width=True, key="vad_sug_4"):
-            st.session_state["chat_history"].append({"role": "user", "text": "¿Qué requisitos exige el EU AI Act para sistemas en clientes corporativos?"})
+        if st.button("🦾 ¿Qué avances recientes hay en robots humanoides y manipulación?", use_container_width=True, key="vad_sug_4"):
+            st.session_state["chat_history"].append({"role": "user", "text": "¿Qué avances recientes hay en robots humanoides y manipulación industrial?"})
             with st.spinner("Consultando fuentes con Gemini AI..."):
-                ans = enricher.ask_feed("¿Qué requisitos exige el EU AI Act para sistemas en clientes corporativos?", news_data)
+                ans = enricher.ask_feed("¿Qué avances recientes hay en robots humanoides y manipulación industrial?", news_data)
                 st.session_state["chat_history"].append({"role": "assistant", "text": ans})
                 st.rerun()
 
@@ -859,34 +993,50 @@ with tab_chat:
             st.markdown(msg['text'])
             st.markdown("---")
             
-    user_query = st.text_input("💬 Consulta estratégica o técnica:", placeholder="Ej. ¿Qué modelos son más recomendables para despliegue local en banca o sanidad?", key="vad_rag_input")
+    user_query = st.text_input("💬 Consulta estratégica, técnica o comunitaria:", placeholder="Ej. ¿Qué opinan en Reddit sobre los nuevos frameworks de agentes?", key="vad_rag_input")
     if st.button("Consultar Asistente Vademecum", type="primary", key="vad_btn_send"):
         if user_query.strip():
             st.session_state["chat_history"].append({"role": "user", "text": user_query})
-            with st.spinner("Analizando con Gemini AI..."):
-                ans = enricher.ask_feed(user_query, news_data)
+            with st.spinner("Analizando noticias y Reddit con Gemini AI..."):
+                combined_context = news_data + reddit_data
+                ans = enricher.ask_feed(user_query, combined_context)
                 st.session_state["chat_history"].append({"role": "assistant", "text": ans})
                 st.rerun()
 
-# PESTAÑA 3: MIS FAVORITOS
+# PESTAÑA 4: MIS FAVORITOS
 with tab_favorites:
-    st.markdown("### ⭐ Artículos Guardados en Vademecum")
-    fav_items = [item for item in news_data if item["id"] in st.session_state["favorites"]]
-    if not fav_items:
-        st.info("Aún no tienes artículos guardados. Pulsa en '☆ Guardar' en cualquier tarjeta para agregarlo a tu dossier.")
+    st.markdown("### ⭐ Elementos Guardados en Vademecum")
+    fav_ids = set(st.session_state["favorites"])
+    fav_news = [item for item in news_data if item["id"] in fav_ids]
+    fav_reddit = [item for item in reddit_data if item["id"] in fav_ids]
+    
+    total_favs = len(fav_news) + len(fav_reddit)
+    if total_favs == 0:
+        st.info("Aún no tienes elementos guardados. Pulsa en '☆ Guardar' en cualquier noticia o hilo de Reddit para agregarlo a tu dossier.")
     else:
-        st.markdown(f"Tienes **{len(fav_items)} artículos** guardados:")
-        for item in fav_items:
-            render_vademecum_card(item, key_prefix="fav_tab")
+        st.markdown(f"Tienes **{total_favs} elementos** guardados:")
+        if fav_news:
+            st.markdown("##### 📰 Noticias y Artículos Guardados:")
+            for item in fav_news:
+                render_vademecum_card(item, key_prefix="fav_news")
+        if fav_reddit:
+            st.markdown("##### 💬 Debates de Reddit Guardados:")
+            for item in fav_reddit:
+                render_reddit_card(item, key_prefix="fav_reddit")
 
-# PESTAÑA 4: MORNING BRIEFING
+# PESTAÑA 5: MORNING BRIEFING
 with tab_digest:
     st.markdown("### 📝 Vademecum Daily AI Briefing")
-    st.markdown("Genera un informe ejecutivo matinal estructurado en Markdown para el equipo de consultoría y clientes.")
+    st.markdown("Genera un informe ejecutivo matinal estructurado en Markdown combinando noticias técnicas de frontera y el pulso de la comunidad de Reddit.")
     
-    if st.button("⚡ Compilar Daily Briefing de Hoy", type="primary", key="vad_btn_gen_digest"):
-        with st.spinner("Compilando análisis ejecutivo de IA y Robótica..."):
+    if st.button("⚡ Compilar Daily Briefing Completo", type="primary", key="vad_btn_gen_digest"):
+        with st.spinner("Compilando análisis ejecutivo de IA, Robótica y Reddit..."):
             digest_content = enricher.generate_daily_digest(news_data)
+            # Agregar sección de Pulso de la Comunidad de Reddit
+            if reddit_data:
+                digest_content += "\n## 💬 PULSO DE LA COMUNIDAD (REDDIT HIGHLIGHTS)\n"
+                for r in reddit_data[:4]:
+                    digest_content += f"• **{r['title']}** ({r['subreddit']} por {r['author']})\n  {r['summary']}\n  🔗 [Ver hilo en Reddit]({r['url']})\n\n"
             st.session_state["generated_digest"] = digest_content
             
     if "generated_digest" in st.session_state:
