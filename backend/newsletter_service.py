@@ -86,7 +86,7 @@ class NewsletterService:
         self.supabase_url = os.environ.get("SUPABASE_URL", "")
         self.supabase_key = os.environ.get("SUPABASE_SERVICE_ROLE_KEY") or os.environ.get("SUPABASE_KEY") or os.environ.get("SUPABASE_ANON_KEY", "")
         self.resend_api_key = os.environ.get("RESEND_API_KEY", "")
-        self.sender_email = os.environ.get("NEWSLETTER_FROM_EMAIL", "Vademecum Hub News <newsletter@vademecumhub.com>")
+        self.sender_email = os.environ.get("RESEND_FROM_EMAIL") or os.environ.get("NEWSLETTER_FROM_EMAIL", "Vademecum Hub News <onboarding@resend.dev>")
 
     def is_simulator_mode(self) -> bool:
         """Determina si el servicio está en modo simulador (sin claves reales aún) o producción."""
@@ -241,7 +241,8 @@ class NewsletterService:
         recipients: List[Dict[str, Any]], 
         subject: str, 
         html_content: str,
-        is_simulation: bool = True
+        is_simulation: bool = True,
+        sender_email: Optional[str] = None
     ) -> Dict[str, Any]:
         """
         Envía la newsletter a los destinatarios.
@@ -270,8 +271,9 @@ class NewsletterService:
 
         with httpx.Client(timeout=10.0) as client:
             for r in recipients:
+                active_sender = sender_email or self.sender_email or "onboarding@resend.dev"
                 payload = {
-                    "from": self.sender_email,
+                    "from": active_sender,
                     "to": [r["email"]],
                     "subject": subject,
                     "html": html_content

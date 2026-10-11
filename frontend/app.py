@@ -798,18 +798,36 @@ with tab_chat:
 with tab_newsletter:
     st.markdown("### 🚀 Lanzador de Newsletter para Clientes (Supabase + Resend)")
     st.markdown("Compila el radar de inteligencia tecnológica y despáchalo a tu base de datos de clientes con **un solo clic**.")
+
+    has_resend = bool(newsletter_service.resend_api_key)
     
-    is_sim = newsletter_service.is_simulator_mode()
-    mode_color = "#f59e0b" if is_sim else "#10b981"
-    mode_title = "🟡 MODO SIMULADOR ACTIVO" if is_sim else "🟢 MODO PRODUCCIÓN ACTIVO"
-    mode_desc = "Los envíos se simularán de forma segura (sin consumir cuotas reales). Cuando agregues tus claves de Resend y Supabase, se dispararán en vivo." if is_sim else "Conectado directamente a tu base de datos Supabase y al motor de envío de Resend."
+    col_mode_sel, col_mode_info = st.columns([0.45, 0.55])
+    with col_mode_sel:
+        opciones_modo = ["🧪 Modo Simulador (Mock seguro)", "🚀 En Vivo con Resend API"] if has_resend else ["🧪 Modo Simulador (Mock seguro)"]
+        modo_seleccionado = st.radio(
+            "Modo de Operación:",
+            opciones_modo,
+            index=1 if has_resend else 0,
+            horizontal=True,
+            key="nl_operational_mode"
+        )
+    is_sim = "Simulador" in modo_seleccionado
     
-    st.markdown(f"""
-    <div style="background: rgba(22, 20, 17, 0.85); border: 1px solid {mode_color}; border-radius: 12px; padding: 16px 20px; margin-bottom: 24px;">
-        <div style="font-size: 0.82rem; font-weight: 800; color: {mode_color}; text-transform: uppercase; letter-spacing: 0.08em;">{mode_title}</div>
-        <div style="font-size: 0.90rem; color: #d6d0c4; margin-top: 4px;">{mode_desc}</div>
-    </div>
-    """, unsafe_allow_html=True)
+    with col_mode_info:
+        if not is_sim:
+            st.markdown("""
+            <div style="background: rgba(16, 185, 129, 0.12); border: 1px solid #10b981; border-radius: 10px; padding: 10px 16px;">
+                <div style="font-size: 0.78rem; font-weight: 800; color: #10b981; text-transform: uppercase;">🟢 RESEND API EN VIVO ACTIVA</div>
+                <div style="font-size: 0.85rem; color: #d6d0c4; margin-top: 2px;">Los correos se enviarán realmente a través de los servidores de Resend.</div>
+            </div>
+            """, unsafe_allow_html=True)
+        else:
+            st.markdown("""
+            <div style="background: rgba(245, 158, 11, 0.12); border: 1px solid #f59e0b; border-radius: 10px; padding: 10px 16px;">
+                <div style="font-size: 0.78rem; font-weight: 800; color: #f59e0b; text-transform: uppercase;">🟡 MODO SIMULADOR SEGURO</div>
+                <div style="font-size: 0.85rem; color: #d6d0c4; margin-top: 2px;">Simulación de despacho con estadísticas sin consumir cuota real de envíos.</div>
+            </div>
+            """, unsafe_allow_html=True)
     
     # 1. Audiencia
     st.markdown("#### 1. Audiencia en Supabase (public.leads)")
@@ -857,36 +875,46 @@ with tab_newsletter:
     st.markdown("#### 3. Acciones de Envío")
     col_test, col_send = st.columns([0.45, 0.55])
     
+    default_sender = newsletter_service.sender_email
+    sender_from = st.text_input("Dirección remitente (From):", value=default_sender, key="nl_sender_from_input", help="En cuentas nuevas de Resend sin dominio propio verificado, usa 'onboarding@resend.dev' para enviar a tu email registrado.")
+    
+    col_test, col_send = st.columns([0.45, 0.55])
+    
     with col_test:
         st.markdown("**🧪 Envío de Prueba:**")
         partner_emails = st.text_input("Emails tuyo y de tu socio (coma):", value="martin@vademecumhub.com, socio@vademecumhub.com", key="nl_test_emails")
         if st.button("Enviar Prueba a Socios", use_container_width=True, key="btn_send_test"):
             test_recipients = [{"email": e.strip(), "nombre": "Socio"} for e in partner_emails.split(",") if e.strip()]
-            with st.spinner("Enviando prueba a socios..."):
-                time.sleep(1.0)
-                res = newsletter_service.send_newsletter(test_recipients, f"[PRUEBA] {email_subject}", html_email, is_simulation=is_sim)
-                st.success(f"✅ ¡Prueba despachada con éxito a {len(test_recipients)} destinatarios! ({res['mode']})")
+            with st.spinner("Despachando prueba..."):
+                time.sleep(0.5)
+                res = newsletter_service.send_newsletter(test_recipients, f"[PRUEBA] {email_subject}", html_email, is_simulation=is_sim, sender_email=sender_from)
+                if res['sent'] > 0:
+                    st.success(f"✅ ¡Prueba despachada a {res['sent']} destinatario(s)! ({res['mode']})")
+                if res['failed'] > 0:
+                    st.error(f"⚠️ {res['failed']} envío(s) no completados en Resend: {', '.join(res['errors'])}")
                 
     with col_send:
         st.markdown("**🚀 Disparo Masivo a Clientes:**")
-        st.markdown(f"Se enviará a **{len(recipients)} clientes** en Supabase.")
+        st.markdown(f"Se enviará a **{len(recipients)} clientes**.")
         if st.button("🚀 ENVIAR NEWSLETTER A CLIENTES (1 CLIC)", type="primary", use_container_width=True, key="btn_send_all_clients"):
             progress_bar = st.progress(0, text="Iniciando conexión con el motor de envíos...")
             for i, r in enumerate(recipients):
-                time.sleep(0.15)
+                time.sleep(0.1)
                 progress_bar.progress((i + 1) / len(recipients), text=f"Despachando a {r['email']} ({r.get('empresa', 'Cliente')})...")
                 
-            res = newsletter_service.send_newsletter(recipients, email_subject, html_email, is_simulation=is_sim)
+            res = newsletter_service.send_newsletter(recipients, email_subject, html_email, is_simulation=is_sim, sender_email=sender_from)
             progress_bar.empty()
             
-            st.balloons()
-            st.success(f"""
-            🎉 **¡Newsletter enviada exitosamente!**
-            * **Destinatarios entregados:** {res['sent']} / {res['total']}
-            * **Tasa de éxito:** 100%
-            * **Modo:** {res['mode']}
-            * **Hora de registro:** {res['timestamp']}
-            """)
+            if res['sent'] > 0:
+                st.balloons()
+                st.success(f"""
+                🎉 **¡Newsletter despachada exitosamente!**
+                * **Destinatarios entregados:** {res['sent']} / {res['total']}
+                * **Modo:** {res['mode']}
+                * **Hora de registro:** {res['timestamp']}
+                """)
+            if res['failed'] > 0:
+                st.warning(f"⚠️ {res['failed']} envíos devueltos por Resend: {res['errors']}")
             
             st.session_state["campaign_history"].append({
                 "fecha": res['timestamp'],
