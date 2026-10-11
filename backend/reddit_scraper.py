@@ -5,6 +5,7 @@ import hashlib
 from datetime import datetime
 from typing import List, Dict, Any
 import re
+import html
 
 TODAY_STR = datetime.now().strftime("%Y-%m-%d")
 
@@ -74,18 +75,34 @@ SEED_REDDIT_DISCUSSIONS: List[Dict[str, Any]] = [
 def generate_reddit_id(url: str) -> str:
     return "rd-" + hashlib.md5(url.encode('utf-8')).hexdigest()[:10]
 
-def clean_reddit_summary(html_content: str, max_chars: int = 350) -> str:
+def clean_reddit_summary(html_content: str, title: str = "", subreddit: str = "r/AI", max_chars: int = 350) -> str:
     if not html_content:
-        return ""
-    soup = BeautifulSoup(html_content, "html.parser")
-    # Eliminar enlaces de pie de página de reddit
+        return f"Debate comunitario en {subreddit} generado en torno a: '{title}'."
+    
+    # Desescapar entidades HTML
+    unescaped = html.unescape(html_content)
+    soup = BeautifulSoup(unescaped, "html.parser")
+    
+    # Eliminar enlaces típicos de reddit [link] [comments]
     for a in soup.find_all("a"):
-        if "[link]" in a.text or "[comments]" in a.text:
+        txt = a.get_text().strip().lower()
+        if "[link]" in txt or "[comments]" in txt or "comments" in txt or "submitted by" in txt:
             a.decompose()
+            
     text = soup.get_text(separator=" ", strip=True)
-    text = re.sub(r'\s+', ' ', text)
-    if len(text) > max_chars:
+    
+    # Limpieza exhaustiva de artefactos de reddit
+    text = re.sub(r'submitted by\s+/?u/[\w\-_]+\s+to\s+r/[\w\-_]+', '', text, flags=re.IGNORECASE)
+    text = re.sub(r'https?://\S+', '', text)
+    text = re.sub(r'\[\s*\]', '', text)
+    text = re.sub(r'\s+', ' ', text).strip()
+    
+    # Si después de limpiar queda vacío o muy corto (p. ej. post de enlace/imagen), generar resumen inteligente
+    if len(text) < 25:
+        text = f"Debate comunitario en {subreddit} generado en torno a: '{title}'. Los ingenieros y miembros del foro analizan sus implicaciones técnicas y casos prácticos."
+    elif len(text) > max_chars:
         text = text[:max_chars].rsplit(' ', 1)[0] + "..."
+        
     return text
 
 def extract_subreddit_from_url(url: str) -> str:
@@ -94,11 +111,15 @@ def extract_subreddit_from_url(url: str) -> str:
         return f"r/{match.group(1)}"
     return "r/AI"
 
+def clean_author_name(author_str: str) -> str:
+    if not author_str:
+        return "u/anon"
+    author_str = author_str.strip()
+    author_str = re.sub(r'^/?u/', '', author_str)
+    author_str = re.sub(r'^u/', '', author_str)
+    return f"u/{author_str}"
+
 def fetch_top_reddit_discussions() -> List[Dict[str, Any]]:
-    """
-    Rastrea en tiempo real los hilos más votados y virales de las principales comunidades de IA de Reddit:
-    r/LocalLLaMA, r/MachineLearning, r/singularity, r/robotics, r/OpenAI, r/ClaudeAI
-    """
     url = "https://www.reddit.com/r/LocalLLaMA+MachineLearning+singularity+robotics+OpenAI+ClaudeAI/top/.rss?t=day"
     headers = {
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
@@ -115,18 +136,17 @@ def fetch_top_reddit_discussions() -> List[Dict[str, Any]]:
                 for entry in feed.entries[:18]:
                     link = getattr(entry, "link", "")
                     title = getattr(entry, "title", "").strip()
-                    author = getattr(entry, "author", "u/anon")
+                    raw_author = getattr(entry, "author", "anon")
                     
                     if not link or not title:
                         continue
                         
                     subreddit = extract_subreddit_from_url(link)
+                    author = clean_author_name(raw_author)
+                    
                     raw_summary = getattr(entry, "summary", "") or getattr(entry, "description", "")
-                    clean_desc = clean_reddit_summary(raw_summary)
-                    if not clean_desc or len(clean_desc) < 20:
-                        clean_desc = f"Hilo destacado en {subreddit} con intenso debate técnico de la comunidad."
+                    clean_desc = clean_reddit_summary(raw_summary, title=title, subreddit=subreddit)
                         
-                    # Determinación de sentimiento y badge
                     lower_t = (title + " " + clean_desc).lower()
                     if "robot" in lower_t or "humanoid" in lower_t or "robotics" in subreddit.lower():
                         sentiment = "Innovación"
@@ -158,9 +178,9 @@ def fetch_top_reddit_discussions() -> List[Dict[str, Any]]:
                         "title": title,
                         "url": link,
                         "subreddit": subreddit,
-                        "author": author if author.startswith("u/") else f"u/{author}",
+                        "author": author,
                         "date": TODAY_STR,
-                        "summary": f"• **Debate Principal:** {clean_desc}\n• **Consenso de la Comunidad:** Hilo con amplia tracción y análisis de ingenieros especializados.",
+                        "summary": f"• **Debate Principal:** {clean_desc}\n• **Consenso de la Comunidad:** Hilo con amplia tracción y análisis de ingenieros especializados en {subreddit}.",
                         "sentiment": sentiment,
                         "sentiment_badge": badge,
                         "hashtags": tags
@@ -169,7 +189,6 @@ def fetch_top_reddit_discussions() -> List[Dict[str, Any]]:
         print(f"[Reddit Scraper] Error al conectar con Reddit: {e}")
 
     if not items:
-        print("[Reddit Scraper] Cargando debates de semilla especializada de Reddit.")
         return list(SEED_REDDIT_DISCUSSIONS)
 
     return items

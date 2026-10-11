@@ -64,6 +64,23 @@ class DatabaseManager:
             """)
             
             cursor.execute("""
+            CREATE TABLE IF NOT EXISTS discord_messages (
+                id TEXT PRIMARY KEY,
+                server_name TEXT NOT NULL,
+                channel_name TEXT NOT NULL,
+                author TEXT NOT NULL,
+                content TEXT NOT NULL,
+                summary TEXT NOT NULL,
+                url TEXT NOT NULL,
+                sentiment TEXT,
+                sentiment_badge TEXT,
+                hashtags TEXT,
+                date TEXT NOT NULL,
+                saved_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+            """)
+            
+            cursor.execute("""
             CREATE TABLE IF NOT EXISTS favorites (
                 news_id TEXT PRIMARY KEY,
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -146,6 +163,48 @@ class DatabaseManager:
         with self._get_connection() as conn:
             cursor = conn.cursor()
             cursor.execute("SELECT * FROM reddit_discussions ORDER BY date DESC, saved_at DESC")
+            rows = cursor.fetchall()
+            
+            result = []
+            for row in rows:
+                item = dict(row)
+                item["hashtags"] = json.loads(item["hashtags"]) if item["hashtags"] else []
+                result.append(item)
+            return result
+
+    # --- MÉTODOS PARA DISCORD ---
+    def clear_all_discord(self):
+        with self._get_connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute("DELETE FROM discord_messages")
+            conn.commit()
+
+    def save_discord_items(self, items: List[Dict[str, Any]]):
+        with self._get_connection() as conn:
+            cursor = conn.cursor()
+            for item in items:
+                cursor.execute("""
+                INSERT OR REPLACE INTO discord_messages (id, server_name, channel_name, author, content, summary, url, sentiment, sentiment_badge, hashtags, date)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                """, (
+                    item.get("id"),
+                    item.get("server_name", "Servidor"),
+                    item.get("channel_name", "#canal"),
+                    item.get("author", "Miembro"),
+                    item.get("content", ""),
+                    item.get("summary", ""),
+                    item.get("url", "#"),
+                    item.get("sentiment", "Tendencia"),
+                    item.get("sentiment_badge", "💬 Comunidad"),
+                    json.dumps(item.get("hashtags", [])),
+                    item.get("date")
+                ))
+            conn.commit()
+
+    def get_all_discord(self) -> List[Dict[str, Any]]:
+        with self._get_connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute("SELECT * FROM discord_messages ORDER BY date DESC, saved_at DESC")
             rows = cursor.fetchall()
             
             result = []
