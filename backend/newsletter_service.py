@@ -5,7 +5,11 @@ from datetime import datetime
 import httpx
 from dotenv import load_dotenv
 
-load_dotenv()
+ENV_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".env"))
+if os.path.exists(ENV_PATH):
+    load_dotenv(ENV_PATH)
+else:
+    load_dotenv()
 
 TODAY_STR = datetime.now().strftime("%d de %B de %Y")
 
@@ -80,7 +84,7 @@ SIMULATED_LEADS: List[Dict[str, Any]] = [
 class NewsletterService:
     def __init__(self):
         self.supabase_url = os.environ.get("SUPABASE_URL", "")
-        self.supabase_key = os.environ.get("SUPABASE_SERVICE_ROLE_KEY") or os.environ.get("SUPABASE_ANON_KEY", "")
+        self.supabase_key = os.environ.get("SUPABASE_SERVICE_ROLE_KEY") or os.environ.get("SUPABASE_KEY") or os.environ.get("SUPABASE_ANON_KEY", "")
         self.resend_api_key = os.environ.get("RESEND_API_KEY", "")
         self.sender_email = os.environ.get("NEWSLETTER_FROM_EMAIL", "Vademecum Hub News <newsletter@vademecumhub.com>")
 
