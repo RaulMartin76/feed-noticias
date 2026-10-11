@@ -52,6 +52,12 @@ if "chat_history" not in st.session_state:
 if "campaign_history" not in st.session_state:
     st.session_state["campaign_history"] = []
 
+if "confirm_send_all" not in st.session_state:
+    st.session_state["confirm_send_all"] = False
+
+if "active_nav_view" not in st.session_state:
+    st.session_state["active_nav_view"] = "radar"
+
 st.session_state["favorites"] = db.get_favorites()
 
 def clean_for_html(text: str) -> str:
@@ -60,9 +66,9 @@ def clean_for_html(text: str) -> str:
     text = re.sub(r'</?[a-zA-Z][^>]*>', '', text)
     text = re.sub(r'>a\s+ref[^<]*', '', text, flags=re.IGNORECASE)
     text = re.sub(r'a\s+href[^<]*', '', text, flags=re.IGNORECASE)
-    text = re.sub(r'\[([^\]]+)\]\([^\)]+\)', r'\1', text)
+    text = re.sub(r'\[([^\]]+)\]\([^\)]+\)', r'', text)
     text = html.escape(text)
-    text = re.sub(r'\*\*(.*?)\*\*', r'<strong>\1</strong>', text)
+    text = re.sub(r'\*\*(.*?)\*\*', r'<strong></strong>', text)
     text = text.replace('\n', '<br>')
     return text
 
@@ -75,35 +81,9 @@ if os.path.exists(LOGO_PATH):
     except Exception:
         logo_b64 = ""
 
-# --- SIDEBAR VADEMECUM HUB ---
-if logo_b64:
-    st.sidebar.markdown(f"""
-    <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 12px;">
-        <img src="data:image/jpeg;base64,{logo_b64}" style="width: 44px; height: 44px; border-radius: 10px; border: 1px solid #c9a227; object-fit: cover;" />
-        <div>
-            <div style="font-family: 'Outfit', sans-serif; font-size: 1.15rem; font-weight: 800; color: #f4efe6; letter-spacing: -0.01em;">VADEMECUM HUB</div>
-            <div style="font-size: 0.72rem; color: #c9a227; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em;">NEWS & INTELLIGENCE</div>
-        </div>
-    </div>
-    """, unsafe_allow_html=True)
-else:
-    st.sidebar.markdown("""
-    <div style="margin-bottom: 12px;">
-        <div style="font-family: 'Outfit', sans-serif; font-size: 1.25rem; font-weight: 800; color: #f4efe6;">⚡ VADEMECUM HUB</div>
-        <div style="font-size: 0.72rem; color: #c9a227; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em;">NEWS & INTELLIGENCE</div>
-    </div>
-    """, unsafe_allow_html=True)
-
-theme_mode = st.sidebar.radio(
-    "🎨 Estilo Visual",
-    ["🌙 Vademecum Dark", "☀️ Vademecum Light"],
-    index=0 if st.session_state["theme"] == "dark" else 1,
-    horizontal=True
-)
-st.session_state["theme"] = "dark" if "Dark" in theme_mode else "light"
 is_dark = st.session_state["theme"] == "dark"
 
-# SISTEMA DE DISEÑO VADEMECUM HUB
+# SISTEMA DE DISEÑO VADEMECUM HUB (DARK Y LIGHT CON AZUL CORPORATIVO INTENSO)
 if is_dark:
     st.markdown("""
     <style>
@@ -126,6 +106,7 @@ if is_dark:
             color: var(--text-ivory) !important;
         }
         
+        /* SIDEBAR EN MODO OSCURO */
         [data-testid="stSidebar"] {
             background-color: var(--surface-vademecum) !important;
             border-right: 1px solid var(--border-vademecum) !important;
@@ -165,14 +146,62 @@ if is_dark:
             outline: none !important;
         }
 
+        /* BARRA DE NAVEGACIÓN HORIZONTAL DE PESTAÑAS (TABS) */
+        div[data-testid="stTabs"] {
+            margin-top: 10px !important;
+            margin-bottom: 24px !important;
+        }
+        div[data-testid="stTabs"] [data-baseweb="tab-list"] {
+            background: #14120f !important;
+            border: 1px solid #332c23 !important;
+            border-radius: 14px !important;
+            padding: 6px 8px !important;
+            gap: 8px !important;
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.45) !important;
+        }
+        div[data-testid="stTabs"] button[data-baseweb="tab"] {
+            border-radius: 10px !important;
+            padding: 10px 18px !important;
+            font-weight: 700 !important;
+            font-size: 0.94rem !important;
+            color: #a8a29e !important;
+            background: transparent !important;
+            border: 1px solid transparent !important;
+            transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1) !important;
+        }
+        div[data-testid="stTabs"] button[data-baseweb="tab"]:hover {
+            color: #f4efe6 !important;
+            background: rgba(201, 162, 39, 0.12) !important;
+            border-color: rgba(201, 162, 39, 0.35) !important;
+        }
+        /* PESTAÑA ACTIVA (SELECCIONADA EN MODO OSCURO) */
+        div[data-testid="stTabs"] button[data-baseweb="tab"][aria-selected="true"] {
+            background: linear-gradient(135deg, #c9a227 0%, #e5be38 100%) !important;
+            color: #0e0d0c !important;
+            font-weight: 800 !important;
+            border: 1px solid #fde047 !important;
+            box-shadow: 0 4px 18px rgba(201, 162, 39, 0.5) !important;
+            transform: translateY(-1px) !important;
+        }
+        div[data-testid="stTabs"] button[data-baseweb="tab"][aria-selected="true"] p,
+        div[data-testid="stTabs"] button[data-baseweb="tab"][aria-selected="true"] span,
+        div[data-testid="stTabs"] button[data-baseweb="tab"][aria-selected="true"] div {
+            color: #0e0d0c !important;
+            font-weight: 800 !important;
+        }
+        div[data-testid="stTabs"] [data-baseweb="tab-highlight"],
+        div[data-testid="stTabs"] [data-baseweb="tab-border"] {
+            display: none !important;
+        }
+
         .vademecum-hero {
             background: radial-gradient(ellipse 90% 80% at 50% -20%, rgba(201, 162, 39, 0.14), transparent 60%),
                         radial-gradient(ellipse 60% 50% at 100% 30%, rgba(47, 111, 106, 0.12), transparent 50%),
                         var(--surface-vademecum);
             border: 1px solid var(--border-vademecum);
             border-radius: 16px;
-            padding: 26px 34px;
-            margin-bottom: 25px;
+            padding: 24px 32px;
+            margin-bottom: 22px;
             box-shadow: 0 12px 36px rgba(0, 0, 0, 0.55), inset 0 1px 0 rgba(201, 162, 39, 0.25);
             display: flex;
             justify-content: space-between;
@@ -190,7 +219,7 @@ if is_dark:
         }
         .vademecum-title {
             font-family: 'Outfit', sans-serif;
-            font-size: 2.3rem;
+            font-size: 2.2rem;
             font-weight: 800;
             color: var(--text-ivory);
             margin: 0;
@@ -202,7 +231,7 @@ if is_dark:
         }
         .vademecum-subtitle {
             color: var(--text-muted);
-            font-size: 0.98rem;
+            font-size: 0.95rem;
             margin-top: 8px;
             margin-bottom: 0;
             font-weight: 500;
@@ -351,6 +380,7 @@ if is_dark:
     </style>
     """, unsafe_allow_html=True)
 else:
+    # MODO LIGHT: BARRA LATERAL AZUL INTENSO CORPORATIVO (MEDセLANUM/VADEMECUM) Y PESTAÑAS CONTRASTADAS
     st.markdown("""
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500;600&display=swap');
@@ -361,7 +391,7 @@ else:
             --border-vademecum: #e7e2d8;
             --accent-gold: #b08a1c;
             --text-dark: #1c1917;
-            --text-muted: #78716c;
+            --text-muted: #64748b;
         }
 
         html, body, [data-testid="stAppViewContainer"] {
@@ -370,17 +400,101 @@ else:
             color: var(--text-dark) !important;
         }
         
+        /* BARRA LATERAL IZQUIERDA EN AZUL INTENSO CORPORATIVO */
         [data-testid="stSidebar"] {
-            background-color: var(--surface-vademecum) !important;
-            border-right: 1px solid var(--border-vademecum) !important;
+            background: linear-gradient(180deg, #071527 0%, #0c2340 50%, #071527 100%) !important;
+            border-right: 1px solid #1e3a5f !important;
+            box-shadow: 4px 0 24px rgba(7, 21, 39, 0.25) !important;
+        }
+        [data-testid="stSidebar"] label,
+        [data-testid="stSidebar"] p,
+        [data-testid="stSidebar"] span,
+        [data-testid="stSidebar"] div,
+        [data-testid="stSidebar"] h1,
+        [data-testid="stSidebar"] h2,
+        [data-testid="stSidebar"] h3 {
+            color: #f8fafc !important;
+            font-weight: 600 !important;
+        }
+
+        /* Inputs y selects dentro de la barra lateral azul */
+        [data-testid="stSidebar"] input {
+            background-color: #0f2b52 !important;
+            color: #ffffff !important;
+            -webkit-text-fill-color: #ffffff !important;
+            border: 1px solid #254d7e !important;
+            border-radius: 8px !important;
+        }
+        [data-testid="stSidebar"] div[data-baseweb="select"] > div {
+            background-color: #0f2b52 !important;
+            color: #ffffff !important;
+            border: 1px solid #254d7e !important;
+            border-radius: 8px !important;
+        }
+        [data-testid="stSidebar"] div[data-baseweb="select"] span {
+            color: #ffffff !important;
+        }
+        [data-testid="stSidebar"] button {
+            background: linear-gradient(135deg, #c9a227 0%, #b8911f 100%) !important;
+            color: #071527 !important;
+            font-weight: 800 !important;
+            border: none !important;
+            box-shadow: 0 4px 12px rgba(201, 162, 39, 0.3) !important;
+        }
+
+        /* BARRA DE NAVEGACIÓN HORIZONTAL DE PESTAÑAS EN MODO LIGHT */
+        div[data-testid="stTabs"] {
+            margin-top: 10px !important;
+            margin-bottom: 24px !important;
+        }
+        div[data-testid="stTabs"] [data-baseweb="tab-list"] {
+            background: #e2e8f0 !important;
+            border: 1px solid #cbd5e1 !important;
+            border-radius: 14px !important;
+            padding: 6px 8px !important;
+            gap: 8px !important;
+            box-shadow: 0 4px 14px rgba(11, 30, 56, 0.08) !important;
+        }
+        div[data-testid="stTabs"] button[data-baseweb="tab"] {
+            border-radius: 10px !important;
+            padding: 10px 18px !important;
+            font-weight: 700 !important;
+            font-size: 0.94rem !important;
+            color: #475569 !important;
+            background: transparent !important;
+            border: 1px solid transparent !important;
+            transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1) !important;
+        }
+        div[data-testid="stTabs"] button[data-baseweb="tab"]:hover {
+            color: #071527 !important;
+            background: rgba(11, 30, 56, 0.08) !important;
+        }
+        /* PESTAÑA ACTIVA EN MODO LIGHT: AZUL INTENSO CORPORATIVO */
+        div[data-testid="stTabs"] button[data-baseweb="tab"][aria-selected="true"] {
+            background: linear-gradient(135deg, #071527 0%, #0c2340 100%) !important;
+            color: #ffffff !important;
+            font-weight: 800 !important;
+            border: 1px solid #040c17 !important;
+            box-shadow: 0 4px 16px rgba(7, 21, 39, 0.45) !important;
+            transform: translateY(-1px) !important;
+        }
+        div[data-testid="stTabs"] button[data-baseweb="tab"][aria-selected="true"] p,
+        div[data-testid="stTabs"] button[data-baseweb="tab"][aria-selected="true"] span,
+        div[data-testid="stTabs"] button[data-baseweb="tab"][aria-selected="true"] div {
+            color: #ffffff !important;
+            font-weight: 800 !important;
+        }
+        div[data-testid="stTabs"] [data-baseweb="tab-highlight"],
+        div[data-testid="stTabs"] [data-baseweb="tab-border"] {
+            display: none !important;
         }
 
         .vademecum-hero {
             background: linear-gradient(135deg, #ffffff 0%, #fdfbf7 50%, #f6f2ea 100%);
             border: 1px solid var(--border-vademecum);
             border-radius: 16px;
-            padding: 26px 34px;
-            margin-bottom: 25px;
+            padding: 24px 32px;
+            margin-bottom: 22px;
             box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
             display: flex;
             justify-content: space-between;
@@ -398,7 +512,7 @@ else:
         }
         .vademecum-title {
             font-family: 'Outfit', sans-serif;
-            font-size: 2.3rem;
+            font-size: 2.2rem;
             font-weight: 800;
             color: var(--text-dark);
             margin: 0;
@@ -410,7 +524,7 @@ else:
         }
         .vademecum-subtitle {
             color: var(--text-muted);
-            font-size: 0.98rem;
+            font-size: 0.95rem;
             margin-top: 8px;
             margin-bottom: 0;
             font-weight: 600;
@@ -459,37 +573,54 @@ else:
             color: var(--accent-gold);
         }
         .news-summary-text {
-            color: #44403c;
+            color: #334155;
             font-size: 0.98rem;
             line-height: 1.6;
         }
     </style>
     """, unsafe_allow_html=True)
 
-# Header Principal Hero VADEMECUM HUB NEWS
-today_date_str = datetime.now().strftime("%d/%m/%Y")
-last_update_str = st.session_state["last_updated"]
+# --- SIDEBAR VADEMECUM HUB (ALTO CONTRASTE GARANTIZADO) ---
+if logo_b64:
+    st.sidebar.markdown(f"""
+    <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 16px; padding: 10px 12px; background: rgba(0, 0, 0, 0.3); border-radius: 12px; border: 1px solid rgba(201, 162, 39, 0.4);">
+        <img src="data:image/jpeg;base64,{logo_b64}" style="width: 44px; height: 44px; border-radius: 10px; border: 2px solid #f59e0b; object-fit: cover;" />
+        <div>
+            <div style="font-family: 'Outfit', sans-serif; font-size: 1.15rem; font-weight: 800; color: #ffffff !important; letter-spacing: -0.01em;">VADEMECUM HUB</div>
+            <div style="font-size: 0.72rem; color: #f59e0b !important; font-weight: 800; text-transform: uppercase; letter-spacing: 0.08em;">NEWS & INTELLIGENCE</div>
+        </div>
+    </div>
+    """, unsafe_allow_html=True)
+else:
+    st.sidebar.markdown("""
+    <div style="margin-bottom: 16px; padding: 10px 12px; background: rgba(0, 0, 0, 0.3); border-radius: 12px; border: 1px solid rgba(201, 162, 39, 0.4);">
+        <div style="font-family: 'Outfit', sans-serif; font-size: 1.25rem; font-weight: 800; color: #ffffff !important;">⚡ VADEMECUM HUB</div>
+        <div style="font-size: 0.72rem; color: #f59e0b !important; font-weight: 800; text-transform: uppercase; letter-spacing: 0.08em;">NEWS & INTELLIGENCE</div>
+    </div>
+    """, unsafe_allow_html=True)
 
-st.markdown(f"""
-<div class="vademecum-hero">
-    <div>
-        <div class="vademecum-eyebrow">VADEMECUM HUB • RADAR DE INTELIGENCIA ESTRATÉGICA & NEWSLETTER</div>
-        <div class="vademecum-title">VADEMECUM HUB <span>NEWS</span></div>
-        <div class="vademecum-subtitle">Inteligencia Global • Medios de IA • <b style="color: #ff6e40;">REDDIT</b> • <b style="color: #7983f5;">DISCORD</b> • <b style="color: #c9a227;">NEWSLETTER CLIENTES</b></div>
+# SECCIÓN 1 DE LA BARRA LATERAL: NAVEGACIÓN Y NEWSLETTER
+st.sidebar.markdown("""
+<div style="background: rgba(201, 162, 39, 0.12); border: 1px solid rgba(201, 162, 39, 0.35); border-radius: 12px; padding: 12px 14px; margin-bottom: 14px;">
+    <div style="display: flex; align-items: center; justify-content: space-between;">
+        <span style="font-size: 0.72rem; color: #f59e0b; font-weight: 800; text-transform: uppercase; letter-spacing: 0.08em;">🚀 SERVICIO NEWSLETTER</span>
+        <span style="background: #f59e0b; color: #071527; font-size: 0.65rem; font-weight: 800; padding: 2px 6px; border-radius: 4px;">MVP</span>
     </div>
-    <div class="vademecum-dates-box">
-        <div class="vademecum-date-item">
-            <span class="vademecum-date-label">📅 Edición Diaria</span>
-            <span class="vademecum-date-val">{today_date_str}</span>
-        </div>
-        <div style="width: 1px; background: rgba(201, 162, 39, 0.3); margin: 0 4px;"></div>
-        <div class="vademecum-date-item">
-            <span class="vademecum-date-label">⏱️ Sincronización</span>
-            <span class="vademecum-date-val">{last_update_str}</span>
-        </div>
-    </div>
+    <div style="font-size: 0.90rem; font-weight: 800; color: #ffffff; margin-top: 4px;">Audiencia Supabase</div>
+    <div style="font-size: 0.78rem; color: #cbd5e1; margin-top: 2px;">8 clientes listos para despacho</div>
 </div>
 """, unsafe_allow_html=True)
+
+# Opción en la barra lateral para saltar directamente a la Newsletter
+sidebar_view = st.sidebar.radio(
+    "📍 Vista Activa:",
+    ["📰 Radar Global de Noticias", "🚀 Lanzador Newsletter (Clientes)"],
+    index=1 if st.session_state["active_nav_view"] == "newsletter" else 0,
+    key="sidebar_view_radio"
+)
+st.session_state["active_nav_view"] = "newsletter" if "Newsletter" in sidebar_view else "radar"
+
+st.sidebar.markdown("---")
 
 def load_and_sync_all_sources(force_sync: bool = False):
     enricher = AIEnricher()
@@ -557,6 +688,47 @@ selected_category = st.sidebar.selectbox("🏷️ Categoría temática", categor
 
 st.sidebar.markdown("---")
 
+# BARRA SUPERIOR: SELECTOR DE MODO OSCURO/LUZ EN LA PARTE SUPERIOR DERECHA
+top_c_title, top_c_theme = st.columns([0.76, 0.24])
+with top_c_theme:
+    st.markdown("<div style='text-align: right; margin-bottom: 2px; font-size: 0.74rem; font-weight: 800; color: #a8a29e; text-transform: uppercase;'>🎨 Modo Visual:</div>", unsafe_allow_html=True)
+    theme_selected = st.selectbox(
+        "Modo Visual",
+        ["🌙 Vademecum Dark", "☀️ Vademecum Light (Azul Intenso)"],
+        index=0 if st.session_state["theme"] == "dark" else 1,
+        label_visibility="collapsed",
+        key="top_right_theme_select"
+    )
+    theme_value = "dark" if "Dark" in theme_selected else "light"
+    if theme_value != st.session_state["theme"]:
+        st.session_state["theme"] = theme_value
+        st.rerun()
+
+# Header Principal Hero VADEMECUM HUB NEWS
+today_date_str = datetime.now().strftime("%d/%m/%Y")
+last_update_str = st.session_state["last_updated"]
+
+st.markdown(f"""
+<div class="vademecum-hero">
+    <div>
+        <div class="vademecum-eyebrow">VADEMECUM HUB • RADAR DE INTELIGENCIA ESTRATÉGICA & NEWSLETTER</div>
+        <div class="vademecum-title">VADEMECUM HUB <span>NEWS</span></div>
+        <div class="vademecum-subtitle">Inteligencia Global • Medios de IA • <b style="color: #ff6e40;">REDDIT</b> • <b style="color: #7983f5;">DISCORD</b> • <b style="color: #c9a227;">NEWSLETTER CLIENTES</b></div>
+    </div>
+    <div class="vademecum-dates-box">
+        <div class="vademecum-date-item">
+            <span class="vademecum-date-label">📅 Edición Diaria</span>
+            <span class="vademecum-date-val">{today_date_str}</span>
+        </div>
+        <div style="width: 1px; background: rgba(201, 162, 39, 0.3); margin: 0 4px;"></div>
+        <div class="vademecum-date-item">
+            <span class="vademecum-date-label">⏱️ Sincronización</span>
+            <span class="vademecum-date-val">{last_update_str}</span>
+        </div>
+    </div>
+</div>
+""", unsafe_allow_html=True)
+
 # KPIs VADEMECUM HUB
 col_k1, col_k2, col_k3, col_k4 = st.columns(4)
 with col_k1:
@@ -591,15 +763,25 @@ with col_k4:
 
 st.markdown("<br>", unsafe_allow_html=True)
 
-# Pestañas Principales
-tab_feed, tab_reddit, tab_discord, tab_chat, tab_newsletter, tab_favorites = st.tabs([
-    "📰 Radar Vademecum", 
-    "💬 Pulso Reddit", 
-    "🎮 Pulso Discord", 
-    "🤖 Asistente Vademecum", 
-    "🚀 Lanzador Newsletter (Clientes)",
-    "⭐ Guardados"
-])
+# ORDEN DINÁMICO DE PESTAÑAS (SEGÚN SELECCIÓN DE LA BARRA LATERAL)
+if st.session_state["active_nav_view"] == "newsletter":
+    tab_newsletter, tab_feed, tab_reddit, tab_discord, tab_chat, tab_favorites = st.tabs([
+        "🚀 Lanzador Newsletter (Clientes)",
+        "📰 Radar Vademecum", 
+        "💬 Pulso Reddit", 
+        "🎮 Pulso Discord", 
+        "🤖 Asistente Vademecum", 
+        "⭐ Guardados"
+    ])
+else:
+    tab_feed, tab_reddit, tab_discord, tab_chat, tab_newsletter, tab_favorites = st.tabs([
+        "📰 Radar Vademecum", 
+        "💬 Pulso Reddit", 
+        "🎮 Pulso Discord", 
+        "🤖 Asistente Vademecum", 
+        "🚀 Lanzador Newsletter (Clientes)",
+        "⭐ Guardados"
+    ])
 
 # Renderizado de Tarjetas Seguras
 def render_vademecum_card(item: dict, key_prefix: str = "feed"):
@@ -620,7 +802,7 @@ def render_vademecum_card(item: dict, key_prefix: str = "feed"):
 
     c_card, c_action = st.columns([0.88, 0.12])
     with c_card:
-        action_btn_style = "text-decoration: none; font-weight: 700; color: #c9a227; font-size: 0.88rem; background: rgba(201, 162, 39, 0.12); padding: 6px 14px; border-radius: 8px; border: 1px solid rgba(201, 162, 39, 0.35);" if is_dark else "text-decoration: none; font-weight: 700; color: #b08a1c; font-size: 0.88rem; background: #fdfaf2; padding: 6px 14px; border-radius: 8px; border: 1px solid #d4af37;"
+        action_btn_style = "text-decoration: none; font-weight: 700; color: #c9a227; font-size: 0.88rem; background: rgba(201, 162, 39, 0.12); padding: 6px 14px; border-radius: 8px; border: 1px solid rgba(201, 162, 39, 0.35);" if is_dark else "text-decoration: none; font-weight: 700; color: #071527; font-size: 0.88rem; background: #e2e8f0; padding: 6px 14px; border-radius: 8px; border: 1px solid #cbd5e1;"
         st.markdown(f"""
         <div class="{card_class}">
             <div style="display: flex; align-items: center; justify-content: space-between;">
@@ -757,25 +939,25 @@ def render_discord_card(item: dict, key_prefix: str = "discord"):
                 st.toast("Mensaje guardado", icon="⭐")
             st.rerun()
 
-# PESTAÑA 1: RADAR NOTICIAS
+# PESTAÑA: RADAR NOTICIAS
 with tab_feed:
     st.markdown(f"#### 📡 **{len(news_data)}** novedades tecnológicas en el Radar")
     for item in news_data:
         render_vademecum_card(item, key_prefix="main_feed")
 
-# PESTAÑA 2: PULSO REDDIT
+# PESTAÑA: PULSO REDDIT
 with tab_reddit:
     st.markdown("### 💬 Pulso de la Comunidad de IA en Reddit")
     for r_item in reddit_data:
         render_reddit_card(r_item, key_prefix="reddit_feed")
 
-# PESTAÑA 3: PULSO DISCORD
+# PESTAÑA: PULSO DISCORD
 with tab_discord:
     st.markdown("### 🎮 Canales de Discord de Servidores IA")
     for dc_item in discord_data:
         render_discord_card(dc_item, key_prefix="discord_feed")
 
-# PESTAÑA 4: ASISTENTE VADEMECUM
+# PESTAÑA: ASISTENTE VADEMECUM
 with tab_chat:
     st.markdown("### 🤖 Asistente Estratégico Vademecum Hub")
     user_query = st.text_input("💬 Consulta estratégica, técnica o comunitaria:", placeholder="Ej. ¿Qué opinan en Reddit sobre los nuevos modelos abiertos?", key="vad_rag_input")
@@ -794,41 +976,21 @@ with tab_chat:
             st.markdown(msg['text'])
             st.markdown("---")
 
-# PESTAÑA 5: LANZADOR DE NEWSLETTER A CLIENTES
+# PESTAÑA: LANZADOR DE NEWSLETTER A CLIENTES
 with tab_newsletter:
     st.markdown("### 🚀 Lanzador de Newsletter para Clientes (Supabase + Resend)")
     st.markdown("Compila el radar de inteligencia tecnológica y despáchalo a tu base de datos de clientes con **un solo clic**.")
 
-    has_resend = bool(newsletter_service.resend_api_key)
-    
-    col_mode_sel, col_mode_info = st.columns([0.45, 0.55])
-    with col_mode_sel:
-        opciones_modo = ["🧪 Modo Simulador (Mock seguro)", "🚀 En Vivo con Resend API"] if has_resend else ["🧪 Modo Simulador (Mock seguro)"]
-        modo_seleccionado = st.radio(
-            "Modo de Operación:",
-            opciones_modo,
-            index=1 if has_resend else 0,
-            horizontal=True,
-            key="nl_operational_mode"
-        )
-    is_sim = "Simulador" in modo_seleccionado
-    
-    with col_mode_info:
-        if not is_sim:
-            st.markdown("""
-            <div style="background: rgba(16, 185, 129, 0.12); border: 1px solid #10b981; border-radius: 10px; padding: 10px 16px;">
-                <div style="font-size: 0.78rem; font-weight: 800; color: #10b981; text-transform: uppercase;">🟢 RESEND API EN VIVO ACTIVA</div>
-                <div style="font-size: 0.85rem; color: #d6d0c4; margin-top: 2px;">Los correos se enviarán realmente a través de los servidores de Resend.</div>
-            </div>
-            """, unsafe_allow_html=True)
-        else:
-            st.markdown("""
-            <div style="background: rgba(245, 158, 11, 0.12); border: 1px solid #f59e0b; border-radius: 10px; padding: 10px 16px;">
-                <div style="font-size: 0.78rem; font-weight: 800; color: #f59e0b; text-transform: uppercase;">🟡 MODO SIMULADOR SEGURO</div>
-                <div style="font-size: 0.85rem; color: #d6d0c4; margin-top: 2px;">Simulación de despacho con estadísticas sin consumir cuota real de envíos.</div>
-            </div>
-            """, unsafe_allow_html=True)
-    
+    # MODO MVP SEGURO: AVISO DESTACADO
+    st.markdown("""
+    <div style="background: rgba(201, 162, 39, 0.12); border: 1px solid #c9a227; border-radius: 12px; padding: 14px 18px; margin-bottom: 20px;">
+        <div style="font-size: 0.82rem; font-weight: 800; color: #f59e0b; text-transform: uppercase; letter-spacing: 0.08em;">🛡️ MODO MVP ACTIVO (ENTORNO SEGURO)</div>
+        <div style="font-size: 0.88rem; color: #d6d0c4; margin-top: 3px;">
+            El sistema opera en simulación protegida. Antes de cualquier envío, el botón te solicitará confirmación explícita para evitar envíos accidentales.
+        </div>
+    </div>
+    """, unsafe_allow_html=True)
+
     # 1. Audiencia
     st.markdown("#### 1. Audiencia en Supabase (public.leads)")
     col_seg, col_count = st.columns([0.7, 0.3])
@@ -871,12 +1033,11 @@ with tab_newsletter:
         
     st.markdown("---")
     
-    # 3. Lanzador de Envíos
+    # 3. Lanzador de Envíos con Confirmación de Seguridad
     st.markdown("#### 3. Acciones de Envío")
-    col_test, col_send = st.columns([0.45, 0.55])
     
-    default_sender = newsletter_service.sender_email
-    sender_from = st.text_input("Dirección remitente (From):", value=default_sender, key="nl_sender_from_input", help="En cuentas nuevas de Resend sin dominio propio verificado, usa 'onboarding@resend.dev' para enviar a tu email registrado.")
+    default_sender = newsletter_service.sender_email or "Vademecum Hub News <onboarding@resend.dev>"
+    sender_from = st.text_input("Dirección remitente (From):", value=default_sender, key="nl_sender_from_input", help="En cuentas nuevas de Resend sin dominio propio verificado, usa 'onboarding@resend.dev'.")
     
     col_test, col_send = st.columns([0.45, 0.55])
     
@@ -885,50 +1046,72 @@ with tab_newsletter:
         partner_emails = st.text_input("Emails tuyo y de tu socio (coma):", value="martin@vademecumhub.com, socio@vademecumhub.com", key="nl_test_emails")
         if st.button("Enviar Prueba a Socios", use_container_width=True, key="btn_send_test"):
             test_recipients = [{"email": e.strip(), "nombre": "Socio"} for e in partner_emails.split(",") if e.strip()]
-            with st.spinner("Despachando prueba..."):
+            with st.spinner("Despachando prueba segura..."):
                 time.sleep(0.5)
-                res = newsletter_service.send_newsletter(test_recipients, f"[PRUEBA] {email_subject}", html_email, is_simulation=is_sim, sender_email=sender_from)
-                if res['sent'] > 0:
-                    st.success(f"✅ ¡Prueba despachada a {res['sent']} destinatario(s)! ({res['mode']})")
-                if res['failed'] > 0:
-                    st.error(f"⚠️ {res['failed']} envío(s) no completados en Resend: {', '.join(res['errors'])}")
+                res = newsletter_service.send_newsletter(test_recipients, f"[PRUEBA] {email_subject}", html_email, is_simulation=True, sender_email=sender_from)
+                st.success(f"✅ ¡Prueba simulada despachada a {res['sent']} destinatario(s)! ({res['mode']})")
                 
     with col_send:
-        st.markdown("**🚀 Disparo Masivo a Clientes:**")
-        st.markdown(f"Se enviará a **{len(recipients)} clientes**.")
-        if st.button("🚀 ENVIAR NEWSLETTER A CLIENTES (1 CLIC)", type="primary", use_container_width=True, key="btn_send_all_clients"):
-            progress_bar = st.progress(0, text="Iniciando conexión con el motor de envíos...")
-            for i, r in enumerate(recipients):
-                time.sleep(0.1)
-                progress_bar.progress((i + 1) / len(recipients), text=f"Despachando a {r['email']} ({r.get('empresa', 'Cliente')})...")
-                
-            res = newsletter_service.send_newsletter(recipients, email_subject, html_email, is_simulation=is_sim, sender_email=sender_from)
-            progress_bar.empty()
+        st.markdown("**🚀 Disparo a Base de Clientes:**")
+        st.markdown(f"Audiencia objetivo: **{len(recipients)} clientes**.")
+
+        # CONTROL DE CONFIRMACIÓN OBLIGATORIA (MVP SEGURO)
+        if not st.session_state["confirm_send_all"]:
+            if st.button("🚀 ENVIAR NEWSLETTER A CLIENTES (1 CLIC)", type="primary", use_container_width=True, key="btn_send_all_clients"):
+                st.session_state["confirm_send_all"] = True
+                st.rerun()
+        else:
+            # CUADRO DE CONFIRMACIÓN VISUAL
+            st.markdown(f"""
+            <div style="background: rgba(245, 158, 11, 0.16); border: 2px solid #f59e0b; border-radius: 12px; padding: 16px 18px; margin-bottom: 12px;">
+                <div style="font-size: 0.95rem; font-weight: 800; color: #f59e0b;">
+                    ⚠️ ¿ESTÁS SEGURO DE QUE DESEAS ENVIAR LA NEWSLETTER?
+                </div>
+                <div style="font-size: 0.88rem; color: #f4efe6; margin-top: 4px;">
+                    Se procesará la campaña para <strong>{len(recipients)} clientes</strong> en modo MVP protegido (sin consumo real).
+                </div>
+            </div>
+            """, unsafe_allow_html=True)
             
-            if res['sent'] > 0:
-                st.balloons()
-                st.success(f"""
-                🎉 **¡Newsletter despachada exitosamente!**
-                * **Destinatarios entregados:** {res['sent']} / {res['total']}
-                * **Modo:** {res['mode']}
-                * **Hora de registro:** {res['timestamp']}
-                """)
-            if res['failed'] > 0:
-                st.warning(f"⚠️ {res['failed']} envíos devueltos por Resend: {res['errors']}")
-            
-            st.session_state["campaign_history"].append({
-                "fecha": res['timestamp'],
-                "asunto": email_subject,
-                "destinatarios": res['sent'],
-                "modo": res['mode']
-            })
+            c_yes, c_no = st.columns(2)
+            with c_yes:
+                if st.button("✅ Sí, Confirmar y Enviar", type="primary", use_container_width=True, key="btn_confirm_send_yes"):
+                    progress_bar = st.progress(0, text="Iniciando conexión con el motor de envíos...")
+                    for i, r in enumerate(recipients):
+                        time.sleep(0.1)
+                        progress_bar.progress((i + 1) / len(recipients), text=f"Despachando a {r['email']} ({r.get('empresa', 'Cliente')})...")
+                        
+                    res = newsletter_service.send_newsletter(recipients, email_subject, html_email, is_simulation=True, sender_email=sender_from)
+                    progress_bar.empty()
+                    st.session_state["confirm_send_all"] = False
+                    
+                    st.balloons()
+                    st.success(f"""
+                    🎉 **¡Newsletter despachada exitosamente!**
+                    * **Destinatarios entregados:** {res['sent']} / {res['total']}
+                    * **Modo:** {res['mode']} (MVP Protegido)
+                    * **Hora de registro:** {res['timestamp']}
+                    """)
+                    
+                    st.session_state["campaign_history"].append({
+                        "fecha": res['timestamp'],
+                        "asunto": email_subject,
+                        "destinatarios": res['sent'],
+                        "modo": "MVP Seguro (Simulado)"
+                    })
+                    st.rerun()
+                    
+            with c_no:
+                if st.button("❌ Cancelar", use_container_width=True, key="btn_confirm_send_no"):
+                    st.session_state["confirm_send_all"] = False
+                    st.rerun()
 
     if st.session_state["campaign_history"]:
         st.markdown("<br>", unsafe_allow_html=True)
         st.markdown("##### 📜 Histórico de Campañas Enviadas en esta Sesión:")
         st.dataframe(pd.DataFrame(st.session_state["campaign_history"]), use_container_width=True)
 
-# PESTAÑA 6: GUARDADOS
+# PESTAÑA: GUARDADOS
 with tab_favorites:
     st.markdown("### ⭐ Elementos Guardados en Vademecum")
     fav_ids = set(st.session_state["favorites"])
