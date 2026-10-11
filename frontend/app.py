@@ -5,27 +5,21 @@ import sys
 import os
 from dotenv import load_dotenv
 
-# Cargar variables del entorno desde .env oculto
+# Cargar variables del entorno desde .env
 load_dotenv()
 
-# Permitir importación directa del backend en cualquier entorno
 CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
 PROJECT_ROOT = os.path.abspath(os.path.join(CURRENT_DIR, ".."))
 if PROJECT_ROOT not in sys.path:
     sys.path.insert(0, PROJECT_ROOT)
 
-REPO_ROOT = os.path.abspath(os.path.join(PROJECT_ROOT, "../.."))
-if REPO_ROOT not in sys.path:
-    sys.path.insert(0, REPO_ROOT)
-
 from backend.scraper import fetch_live_news
 from backend.ai_enricher import AIEnricher
 from backend.db_manager import DatabaseManager
-from backend.gmail_reader import GmailNewsletterReader
 
 st.set_page_config(
-    page_title="Terminal Financiero • Feed de Noticias",
-    page_icon="⚡",
+    page_title="Terminal IA & Robótica • Feed de Inteligencia Tecnológica",
+    page_icon="🤖",
     layout="wide",
     initial_sidebar_state="expanded"
 )
@@ -53,33 +47,33 @@ if "chat_history" not in st.session_state:
 st.session_state["favorites"] = db.get_favorites()
 
 # --- SIDEBAR: PANEL DE CONTROL ---
-st.sidebar.markdown("### 🎛️ Panel de Control")
+st.sidebar.markdown("### 🎛️ Terminal de Control")
 
 # Selector de Tema
 theme_mode = st.sidebar.radio(
-    "🎨 Modo de Visualización",
-    ["🌙 Modo Oscuro", "☀️ Modo Claro"],
+    "🎨 Visualización",
+    ["🌙 Modo Cyber Dark", "☀️ Modo Tech Light"],
     index=0 if st.session_state["theme"] == "dark" else 1,
     horizontal=True
 )
-st.session_state["theme"] = "dark" if "Oscuro" in theme_mode else "light"
+st.session_state["theme"] = "dark" if "Dark" in theme_mode else "light"
 is_dark = st.session_state["theme"] == "dark"
 
-# DESIGN SYSTEM - CSS Avanzado Adaptativo (Modo Oscuro Glassmorphism & Modo Claro Executive)
+# DESIGN SYSTEM - Estilos CSS Avanzados para Consultoría de IA y Robótica
 if is_dark:
     st.markdown("""
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Outfit:wght@400;600;700;800&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Outfit:wght@400;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap');
 
         html, body, [data-testid="stAppViewContainer"] {
-            background-color: #070a12 !important;
+            background-color: #070913 !important;
             font-family: 'Plus Jakarta Sans', sans-serif !important;
             color: #f1f5f9 !important;
         }
         
         [data-testid="stSidebar"] {
-            background-color: #0d1322 !important;
-            border-right: 1px solid rgba(255, 255, 255, 0.08) !important;
+            background-color: #0c1020 !important;
+            border-right: 1px solid rgba(0, 210, 255, 0.15) !important;
         }
         [data-testid="stSidebar"] label,
         [data-testid="stSidebar"] p,
@@ -96,10 +90,10 @@ if is_dark:
         .stTextInput input,
         input[type="text"],
         textarea {
-            background-color: #0f172a !important;
+            background-color: #0e1428 !important;
             color: #ffffff !important;
             -webkit-text-fill-color: #ffffff !important;
-            border: 1px solid rgba(56, 189, 248, 0.4) !important;
+            border: 1px solid rgba(0, 210, 255, 0.35) !important;
             border-radius: 10px !important;
             padding: 10px 16px !important;
             font-size: 0.98rem !important;
@@ -110,20 +104,20 @@ if is_dark:
         .stTextInput input:focus,
         input[type="text"]:focus,
         textarea:focus {
-            background-color: #1e293b !important;
-            border-color: #38bdf8 !important;
-            box-shadow: 0 0 12px rgba(56, 189, 248, 0.4) !important;
+            background-color: #151d38 !important;
+            border-color: #00d2ff !important;
+            box-shadow: 0 0 14px rgba(0, 210, 255, 0.4) !important;
             outline: none !important;
         }
 
         .hero-header {
-            background: linear-gradient(135deg, rgba(15, 23, 42, 0.95) 0%, rgba(30, 41, 59, 0.85) 50%, rgba(15, 23, 42, 0.95) 100%);
+            background: linear-gradient(135deg, rgba(12, 16, 32, 0.95) 0%, rgba(20, 28, 55, 0.85) 50%, rgba(12, 16, 32, 0.95) 100%);
             backdrop-filter: blur(16px);
-            border: 1px solid rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(0, 210, 255, 0.2);
             border-radius: 16px;
             padding: 24px 32px;
             margin-bottom: 25px;
-            box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.15);
+            box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.6), inset 0 1px 0 rgba(0, 210, 255, 0.2);
             display: flex;
             justify-content: space-between;
             align-items: center;
@@ -134,7 +128,7 @@ if is_dark:
             font-family: 'Outfit', sans-serif;
             font-size: 2.2rem;
             font-weight: 800;
-            background: linear-gradient(135deg, #ffffff 0%, #cbd5e1 100%);
+            background: linear-gradient(135deg, #ffffff 0%, #00d2ff 100%);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             margin: 0;
@@ -150,127 +144,87 @@ if is_dark:
 
         .hero-dates-box {
             display: flex;
-            gap: 12px;
-            background: rgba(15, 23, 42, 0.8);
-            border: 1px solid rgba(56, 189, 248, 0.25);
-            padding: 10px 18px;
+            background: rgba(15, 23, 42, 0.6);
+            border: 1px solid rgba(0, 210, 255, 0.25);
             border-radius: 12px;
+            padding: 10px 18px;
+            gap: 16px;
+        }
+        .hero-date-item {
+            display: flex;
+            flex-direction: column;
         }
         .hero-date-label {
             font-size: 0.72rem;
-            font-weight: 700;
             text-transform: uppercase;
-            color: #94a3b8;
+            color: #00d2ff;
+            font-weight: 700;
+            letter-spacing: 0.05em;
         }
         .hero-date-val {
-            font-family: 'Outfit', sans-serif;
-            font-size: 1.05rem;
-            font-weight: 700;
-            color: #38bdf8;
-        }
-
-        [data-testid="stTabs"] *,
-        [data-baseweb="tab-list"] *,
-        [data-baseweb="tab"] * {
-            color: #ffffff !important;
-            -webkit-text-fill-color: #ffffff !important;
-            font-weight: 700 !important;
-        }
-
-        [data-baseweb="tab"][aria-selected="false"],
-        [data-testid="stTabs"] button[aria-selected="false"] {
-            background-color: #1e293b !important;
-            border: 1px solid rgba(255, 255, 255, 0.3) !important;
-            border-radius: 8px !important;
-            margin-right: 8px !important;
-            padding: 8px 22px !important;
-        }
-
-        [data-baseweb="tab"][aria-selected="true"],
-        [data-testid="stTabs"] button[aria-selected="true"] {
-            background: linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%) !important;
-            border: 1px solid #38bdf8 !important;
-            border-radius: 8px !important;
-            box-shadow: 0 4px 15px rgba(14, 165, 233, 0.5) !important;
-        }
-
-        div[data-testid="stButton"] > button {
-            background: #1e293b !important;
-            border: 1px solid rgba(56, 189, 248, 0.3) !important;
-            border-radius: 8px !important;
-            transition: all 0.2s ease !important;
-        }
-        div[data-testid="stButton"] > button * {
-            color: #38bdf8 !important;
-            font-weight: 700 !important;
-            font-size: 0.88rem !important;
-        }
-        div[data-testid="stButton"] > button:hover {
-            background: #0284c7 !important;
-            border-color: #38bdf8 !important;
-            box-shadow: 0 0 12px rgba(56, 189, 248, 0.4) !important;
-        }
-        div[data-testid="stButton"] > button:hover * {
-            color: #ffffff !important;
+            font-size: 0.95rem;
+            font-weight: 800;
+            color: #ffffff;
+            font-family: 'JetBrains Mono', monospace;
         }
 
         .kpi-card {
-            background: rgba(15, 23, 42, 0.6);
-            backdrop-filter: blur(12px);
+            background: rgba(14, 20, 40, 0.75);
             border: 1px solid rgba(255, 255, 255, 0.08);
             border-radius: 14px;
             padding: 18px 22px;
-            text-align: left;
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
-            transition: all 0.25s ease;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+            transition: transform 0.2s ease, border-color 0.2s ease;
         }
         .kpi-card:hover {
-            border-color: rgba(56, 189, 248, 0.4);
-            transform: translateY(-3px);
-            box-shadow: 0 8px 25px rgba(0, 163, 224, 0.15);
+            transform: translateY(-2px);
+            border-color: rgba(0, 210, 255, 0.4);
         }
         .kpi-label {
-            font-size: 0.82rem;
+            font-size: 0.8rem;
+            color: #94a3b8;
             font-weight: 700;
             text-transform: uppercase;
-            letter-spacing: 0.08em;
-            color: #94a3b8;
-            margin-bottom: 6px;
+            letter-spacing: 0.05em;
         }
         .kpi-value {
-            font-family: 'Outfit', sans-serif;
-            font-size: 2rem;
+            font-size: 1.85rem;
             font-weight: 800;
-            color: #f8fafc;
+            color: #ffffff;
+            font-family: 'Outfit', sans-serif;
+            margin-top: 4px;
         }
 
         .news-card-container {
-            background: rgba(15, 23, 42, 0.75);
-            backdrop-filter: blur(12px);
+            background: rgba(14, 20, 40, 0.65);
             border: 1px solid rgba(255, 255, 255, 0.08);
             border-radius: 16px;
             padding: 24px;
             margin-bottom: 20px;
             transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
             position: relative;
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25);
+            box-shadow: 0 4px 24px rgba(0, 0, 0, 0.3);
         }
         .news-card-container:hover {
-            transform: translateY(-4px);
-            border-color: rgba(56, 189, 248, 0.35);
-            box-shadow: 0 12px 30px rgba(0, 0, 0, 0.4), 0 0 20px rgba(56, 189, 248, 0.1);
+            transform: translateY(-3px);
+            border-color: rgba(0, 210, 255, 0.5);
+            box-shadow: 0 10px 30px -5px rgba(0, 210, 255, 0.2);
         }
         
-        .news-card-alt {
-            background: linear-gradient(135deg, rgba(30, 11, 28, 0.8) 0%, rgba(15, 23, 42, 0.9) 100%) !important;
-            border: 1px solid rgba(236, 72, 153, 0.35) !important;
-            box-shadow: 0 4px 25px rgba(236, 72, 153, 0.15) !important;
+        .news-card-robotics {
+            background: linear-gradient(135deg, rgba(30, 10, 45, 0.8) 0%, rgba(14, 20, 40, 0.85) 100%) !important;
+            border: 1px solid rgba(224, 36, 195, 0.5) !important;
+            box-shadow: 0 4px 24px rgba(224, 36, 195, 0.15) !important;
+        }
+        .news-card-robotics:hover {
+            border-color: #e024c3 !important;
+            box-shadow: 0 10px 30px -5px rgba(224, 36, 195, 0.35) !important;
         }
 
         .badge-source {
-            background: rgba(30, 41, 59, 0.8);
+            background: rgba(255, 255, 255, 0.06);
             border: 1px solid rgba(255, 255, 255, 0.12);
-            color: #cbd5e1;
+            color: #94a3b8;
             padding: 5px 12px;
             border-radius: 8px;
             font-size: 0.78rem;
@@ -279,8 +233,8 @@ if is_dark:
             margin-right: 8px;
         }
         .badge-category {
-            background: rgba(14, 165, 233, 0.15);
-            border: 1px solid rgba(56, 189, 248, 0.3);
+            background: rgba(0, 210, 255, 0.12);
+            border: 1px solid rgba(0, 210, 255, 0.35);
             color: #38bdf8;
             padding: 5px 12px;
             border-radius: 8px;
@@ -289,18 +243,18 @@ if is_dark:
             display: inline-block;
             margin-right: 8px;
         }
-        .badge-alt-category {
-            background: linear-gradient(135deg, #d946ef 0%, #ec4899 100%) !important;
+        .badge-robotics-category {
+            background: linear-gradient(135deg, #c026d3 0%, #db2777 100%) !important;
             color: #ffffff !important;
             padding: 5px 14px !important;
             border-radius: 8px !important;
             font-size: 0.8rem !important;
             font-weight: 800 !important;
-            box-shadow: 0 0 12px rgba(217, 70, 239, 0.5) !important;
+            box-shadow: 0 2px 10px rgba(219, 39, 119, 0.4) !important;
             display: inline-block;
             margin-right: 8px;
         }
-        .badge-tone-opportunity {
+        .badge-tone-innovation {
             background: rgba(16, 185, 129, 0.15);
             border: 1px solid rgba(52, 211, 153, 0.4);
             color: #34d399;
@@ -322,7 +276,7 @@ if is_dark:
             display: inline-block;
             margin-right: 8px;
         }
-        .badge-tone-neutral {
+        .badge-tone-trend {
             background: rgba(245, 158, 11, 0.15);
             border: 1px solid rgba(251, 191, 36, 0.4);
             color: #fbbf24;
@@ -346,7 +300,7 @@ if is_dark:
             transition: color 0.2s ease;
         }
         .news-title-link:hover {
-            color: #38bdf8;
+            color: #00d2ff;
         }
         .news-summary-text {
             color: #cbd5e1;
@@ -354,22 +308,13 @@ if is_dark:
             line-height: 1.6;
             white-space: pre-line;
         }
-
-        .disclaimer-card {
-            background: rgba(15, 23, 42, 0.85);
-            border: 1px solid rgba(56, 189, 248, 0.25);
-            border-radius: 14px;
-            padding: 24px;
-            margin-top: 40px;
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
-        }
     </style>
     """, unsafe_allow_html=True)
 else:
-    # CSS MODO CLARO EXECUTIVE
+    # MODO TECH LIGHT
     st.markdown("""
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Outfit:wght@400;600;700;800&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Outfit:wght@400;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap');
 
         html, body, [data-testid="stAppViewContainer"] {
             background-color: #f8fafc !important;
@@ -380,40 +325,6 @@ else:
         [data-testid="stSidebar"] {
             background-color: #ffffff !important;
             border-right: 1px solid #e2e8f0 !important;
-        }
-        [data-testid="stSidebar"] label,
-        [data-testid="stSidebar"] p,
-        [data-testid="stSidebar"] span,
-        [data-testid="stSidebar"] div,
-        [data-testid="stSidebar"] h1,
-        [data-testid="stSidebar"] h2,
-        [data-testid="stSidebar"] h3 {
-            color: #0f172a !important;
-            font-weight: 600 !important;
-        }
-
-        div[data-testid="stTextInput"] input,
-        .stTextInput input,
-        input[type="text"],
-        textarea {
-            background-color: #ffffff !important;
-            color: #0f172a !important;
-            -webkit-text-fill-color: #0f172a !important;
-            border: 1px solid #cbd5e1 !important;
-            border-radius: 10px !important;
-            padding: 10px 16px !important;
-            font-size: 0.98rem !important;
-            font-weight: 600 !important;
-        }
-
-        div[data-testid="stTextInput"] input:focus,
-        .stTextInput input:focus,
-        input[type="text"]:focus,
-        textarea:focus {
-            background-color: #f8fafc !important;
-            border-color: #0284c7 !important;
-            box-shadow: 0 0 10px rgba(2, 132, 199, 0.2) !important;
-            outline: none !important;
         }
 
         .hero-header {
@@ -448,72 +359,24 @@ else:
 
         .hero-dates-box {
             display: flex;
-            gap: 12px;
             background: #ffffff;
             border: 1px solid #cbd5e1;
-            padding: 10px 18px;
             border-radius: 12px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+            padding: 10px 18px;
+            gap: 16px;
         }
         .hero-date-label {
             font-size: 0.72rem;
-            font-weight: 700;
             text-transform: uppercase;
-            color: #64748b;
+            color: #0284c7;
+            font-weight: 700;
+            letter-spacing: 0.05em;
         }
         .hero-date-val {
-            font-family: 'Outfit', sans-serif;
-            font-size: 1.05rem;
-            font-weight: 700;
-            color: #0284c7;
-        }
-
-        [data-testid="stTabs"] *,
-        [data-baseweb="tab-list"] *,
-        [data-baseweb="tab"] * {
-            font-weight: 700 !important;
-        }
-
-        [data-baseweb="tab"][aria-selected="false"],
-        [data-testid="stTabs"] button[aria-selected="false"] {
-            background-color: #e2e8f0 !important;
-            border: 1px solid #cbd5e1 !important;
-            color: #1e293b !important;
-            -webkit-text-fill-color: #1e293b !important;
-            border-radius: 8px !important;
-            margin-right: 8px !important;
-            padding: 8px 22px !important;
-        }
-
-        [data-baseweb="tab"][aria-selected="true"],
-        [data-testid="stTabs"] button[aria-selected="true"] {
-            background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%) !important;
-            color: #ffffff !important;
-            -webkit-text-fill-color: #ffffff !important;
-            border: 1px solid #0284c7 !important;
-            border-radius: 8px !important;
-            box-shadow: 0 4px 12px rgba(2, 132, 199, 0.3) !important;
-        }
-
-        div[data-testid="stButton"] > button {
-            background: #ffffff !important;
-            border: 1px solid #cbd5e1 !important;
-            border-radius: 8px !important;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.04) !important;
-            transition: all 0.2s ease !important;
-        }
-        div[data-testid="stButton"] > button * {
-            color: #0284c7 !important;
-            font-weight: 700 !important;
-            font-size: 0.88rem !important;
-        }
-        div[data-testid="stButton"] > button:hover {
-            background: #0284c7 !important;
-            border-color: #0284c7 !important;
-            box-shadow: 0 0 10px rgba(2, 132, 199, 0.3) !important;
-        }
-        div[data-testid="stButton"] > button:hover * {
-            color: #ffffff !important;
+            font-size: 0.95rem;
+            font-weight: 800;
+            color: #0f172a;
+            font-family: 'JetBrains Mono', monospace;
         }
 
         .kpi-card {
@@ -521,28 +384,20 @@ else:
             border: 1px solid #e2e8f0;
             border-radius: 14px;
             padding: 18px 22px;
-            text-align: left;
             box-shadow: 0 2px 10px rgba(0, 0, 0, 0.04);
-            transition: all 0.25s ease;
-        }
-        .kpi-card:hover {
-            border-color: #0284c7;
-            transform: translateY(-3px);
-            box-shadow: 0 6px 18px rgba(2, 132, 199, 0.12);
         }
         .kpi-label {
-            font-size: 0.82rem;
+            font-size: 0.8rem;
+            color: #64748b;
             font-weight: 700;
             text-transform: uppercase;
-            letter-spacing: 0.08em;
-            color: #64748b;
-            margin-bottom: 6px;
         }
         .kpi-value {
-            font-family: 'Outfit', sans-serif;
-            font-size: 2rem;
+            font-size: 1.85rem;
             font-weight: 800;
             color: #0f172a;
+            font-family: 'Outfit', sans-serif;
+            margin-top: 4px;
         }
 
         .news-card-container {
@@ -551,17 +406,16 @@ else:
             border-radius: 16px;
             padding: 24px;
             margin-bottom: 20px;
-            transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-            position: relative;
-            box-shadow: 0 2px 12px rgba(0, 0, 0, 0.05);
+            box-shadow: 0 2px 12px rgba(0, 0, 0, 0.04);
+            transition: all 0.25s ease;
         }
         .news-card-container:hover {
-            transform: translateY(-4px);
+            transform: translateY(-3px);
             border-color: #0284c7;
             box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
         }
         
-        .news-card-alt {
+        .news-card-robotics {
             background: linear-gradient(135deg, #fdf2f8 0%, #ffffff 100%) !important;
             border: 1px solid #f472b6 !important;
             box-shadow: 0 4px 18px rgba(236, 72, 153, 0.1) !important;
@@ -589,47 +443,13 @@ else:
             display: inline-block;
             margin-right: 8px;
         }
-        .badge-alt-category {
+        .badge-robotics-category {
             background: linear-gradient(135deg, #d946ef 0%, #db2777 100%) !important;
             color: #ffffff !important;
             padding: 5px 14px !important;
             border-radius: 8px !important;
             font-size: 0.8rem !important;
             font-weight: 800 !important;
-            box-shadow: 0 2px 8px rgba(219, 39, 119, 0.3) !important;
-            display: inline-block;
-            margin-right: 8px;
-        }
-        .badge-tone-opportunity {
-            background: #dcfce7;
-            border: 1px solid #86efac;
-            color: #15803d;
-            padding: 5px 12px;
-            border-radius: 8px;
-            font-size: 0.78rem;
-            font-weight: 700;
-            display: inline-block;
-            margin-right: 8px;
-        }
-        .badge-tone-alert {
-            background: #fee2e2;
-            border: 1px solid #fca5a5;
-            color: #b91c1c;
-            padding: 5px 12px;
-            border-radius: 8px;
-            font-size: 0.78rem;
-            font-weight: 700;
-            display: inline-block;
-            margin-right: 8px;
-        }
-        .badge-tone-neutral {
-            background: #fef3c7;
-            border: 1px solid #fde68a;
-            color: #b45309;
-            padding: 5px 12px;
-            border-radius: 8px;
-            font-size: 0.78rem;
-            font-weight: 700;
             display: inline-block;
             margin-right: 8px;
         }
@@ -643,7 +463,6 @@ else:
             margin-top: 12px;
             margin-bottom: 10px;
             display: block;
-            transition: color 0.2s ease;
         }
         .news-title-link:hover {
             color: #0284c7;
@@ -654,27 +473,18 @@ else:
             line-height: 1.6;
             white-space: pre-line;
         }
-
-        .disclaimer-card {
-            background: #ffffff;
-            border: 1px solid #cbd5e1;
-            border-radius: 14px;
-            padding: 24px;
-            margin-top: 40px;
-            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.05);
-        }
     </style>
     """, unsafe_allow_html=True)
 
-# Header Principal Hero con Fechas Visibles
+# Header Principal Hero con Fechas y Título
 today_date_str = datetime.now().strftime("%d/%m/%Y")
 last_update_str = st.session_state["last_updated"]
 
 st.markdown(f"""
 <div class="hero-header">
     <div>
-        <div class="hero-title">⚡ Terminal Financiero & Feed de Noticias</div>
-        <div class="hero-subtitle">Inteligencia de Mercado en Tiempo Real • Funds People • Funds Society • EFPA España • <b style="color: #db2777;">FONDOS ALTERNATIVOS</b></div>
+        <div class="hero-title">⚡ Terminal IA & Robótica • Consultoría Tecnológica</div>
+        <div class="hero-subtitle">Inteligencia Global en Tiempo Real • Modelos Fundacionales • Hardware • Agentes • <b style="color: #e024c3;">ROBÓTICA & EMBODIED AI</b></div>
     </div>
     <div class="hero-dates-box">
         <div class="hero-date-item">
@@ -683,28 +493,27 @@ st.markdown(f"""
         </div>
         <div style="width: 1px; background: rgba(128,128,128,0.25); margin: 0 4px;"></div>
         <div class="hero-date-item">
-            <span class="hero-date-label">⏱️ Última Actualización</span>
+            <span class="hero-date-label">⏱️ Última Sincronización</span>
             <span class="hero-date-val">{last_update_str}</span>
         </div>
     </div>
 </div>
 """, unsafe_allow_html=True)
 
-# Mostrar toast si acaba de sincronizar
 if st.session_state["just_synced"]:
-    st.toast("⚡ Noticias en vivo resincronizadas con éxito desde las webs oficiales", icon="📰")
-    st.success("Noticias en vivo resincronizadas con éxito desde las webs oficiales.")
+    st.toast("⚡ Noticias de IA y Robótica resincronizadas con éxito desde fuentes globales", icon="🚀")
+    st.success("Noticias de IA y Robótica resincronizadas con éxito desde fuentes globales.")
     st.session_state["just_synced"] = False
 
-# Función para cargar y sincronizar noticias en vivo reales con protección total contra fallos
-def load_and_sync_data(force_sync: bool = False):
+# Función para sincronizar noticias de IA
+def load_and_sync_ai_data(force_sync: bool = False):
     enricher = AIEnricher()
     existing_news = []
     
     try:
         existing_news = db.get_all_news()
     except Exception as e:
-        print(f"[App] Error leyendo base de datos: {e}")
+        print(f"[App IA] Error leyendo SQLite: {e}")
         existing_news = []
     
     if not existing_news or force_sync:
@@ -713,74 +522,63 @@ def load_and_sync_data(force_sync: bool = False):
                 db.clear_all_news()
                 
             raw_news = fetch_live_news()
-            try:
-                reader = GmailNewsletterReader()
-                email_news = reader.fetch_today_emails()
-                if email_news:
-                    raw_news.extend(email_news)
-            except Exception as e_email:
-                print(f"[App] Error leyendo newsletters por email: {e_email}")
-                
             enriched = [enricher.enrich_item(item) for item in raw_news]
             db.save_news_items(enriched)
             existing_news = db.get_all_news()
             st.session_state["last_updated"] = datetime.now().strftime("%H:%M:%S")
         except Exception as e_sync:
-            print(f"[App] Excepción en sincronización en vivo, usando respaldo: {e_sync}")
+            print(f"[App IA] Excepción en sincronización, cargando respaldo: {e_sync}")
             from backend.scraper import SEED_NEWS
             existing_news = SEED_NEWS
             
     return existing_news, enricher
 
-
-# Botón de Sincronización en Vivo Reales
-if st.sidebar.button("🔄 Sincronizar Noticias en Vivo", use_container_width=True, type="primary"):
-    with st.spinner("Scrapeando titulares en vivo de FundsPeople, FundsSociety y procesando con Gemini 3.6 Flash..."):
-        news_data, enricher = load_and_sync_data(force_sync=True)
+# Botón de Sincronización en Sidebar
+if st.sidebar.button("🔄 Sincronizar Noticias Globales", use_container_width=True, type="primary"):
+    with st.spinner("Rastreando portales top de IA & Robótica y enriqueciendo con Gemini AI..."):
+        news_data, enricher = load_and_sync_ai_data(force_sync=True)
         st.session_state["just_synced"] = True
         st.rerun()
 else:
-    news_data, enricher = load_and_sync_data(force_sync=False)
+    news_data, enricher = load_and_sync_ai_data(force_sync=False)
 
-search_term = st.sidebar.text_input("🔍 Búsqueda global", placeholder="ej. RIS, Family Office, Bankinter, Private Equity...")
+search_term = st.sidebar.text_input("🔍 Búsqueda global", placeholder="ej. Humanoides, Blackwell, MCP, LangGraph, EU AI Act...")
 
 sources = ["Todas"] + sorted(list(set(item["source"] for item in news_data if item.get("source"))))
-selected_source = st.sidebar.selectbox("🏛️ Fuente de noticias", sources)
+selected_source = st.sidebar.selectbox("🌐 Fuente tecnológica", sources)
 
-categories = ["Todas", "FONDOS ALTERNATIVOS"] + [c for c in sorted(list(set(item["category"] for item in news_data if item.get("category")))) if c != "FONDOS ALTERNATIVOS"]
+categories = ["Todas", "ROBÓTICA & EMBODIED AI"] + [c for c in sorted(list(set(item["category"] for item in news_data if item.get("category")))) if c != "ROBÓTICA & EMBODIED AI"]
 selected_category = st.sidebar.selectbox("🏷️ Categoría temática", categories)
 
-sentiment_options = ["Todos", "Oportunidad", "Alerta Regulatoria", "Neutro"]
-selected_sentiment = st.sidebar.selectbox("📊 Tono de Mercado", sentiment_options)
+sentiment_options = ["Todos", "Innovación", "Oportunidad", "Alerta", "Tendencia", "Actualización"]
+selected_sentiment = st.sidebar.selectbox("📊 Impacto / Sentimiento", sentiment_options)
 
 st.sidebar.markdown("---")
 
-# Indicador de estado de la IA
 ai_status_color = "#10b981" if enricher.client else "#f59e0b"
-ai_status_text = "🟢 Gemini 3.6 Flash Activo" if enricher.client else "🟡 Modo Heurístico"
+ai_status_text = "🟢 Gemini AI Activo" if enricher.client else "🟡 Motor Heurístico"
 
-sidebar_card_bg = "rgba(15, 23, 42, 0.9)" if is_dark else "#f1f5f9"
-sidebar_card_border = "rgba(255,255,255,0.12)" if is_dark else "#cbd5e1"
+sidebar_card_bg = "rgba(14, 20, 40, 0.9)" if is_dark else "#f1f5f9"
+sidebar_card_border = "rgba(0, 210, 255, 0.2)" if is_dark else "#cbd5e1"
 sidebar_title_color = "#ffffff" if is_dark else "#0f172a"
 
 st.sidebar.markdown(f"""
 <div style="background: {sidebar_card_bg}; border: 1px solid {sidebar_card_border}; border-radius: 10px; padding: 14px; margin-bottom: 15px;">
     <div style="font-size: 0.8rem; color: {sidebar_title_color}; font-weight: 700; text-transform: uppercase;">🤖 Inteligencia Artificial</div>
     <div style="font-size: 0.9rem; color: {ai_status_color}; font-weight: 700; margin-top: 4px;">{ai_status_text}</div>
-    <div style="font-size: 0.82rem; color: #0284c7; margin-top: 8px;">💾 BD SQLite: <b>{len(news_data)} noticias activas</b></div>
+    <div style="font-size: 0.82rem; color: #00d2ff; margin-top: 8px;">💾 BD Local: <b>{len(news_data)} artículos analizados</b></div>
 </div>
 """, unsafe_allow_html=True)
 
-# Widget de Créditos en Sidebar
 st.sidebar.markdown(f"""
 <div style="background: {sidebar_card_bg}; border: 1px solid {sidebar_card_border}; border-radius: 10px; padding: 14px;">
-    <div style="font-size: 0.75rem; color: #64748b; font-weight: 700; text-transform: uppercase;">👨‍💻 Creado por</div>
-    <div style="font-size: 0.88rem; color: {sidebar_title_color}; font-weight: 700; margin-top: 2px;">Raúl Martín</div>
-    <div style="font-size: 0.78rem; color: #0ea5e9; font-weight: 600;">Dpto. Banca Privada</div>
+    <div style="font-size: 0.75rem; color: #64748b; font-weight: 700; text-transform: uppercase;">🏢 Entorno</div>
+    <div style="font-size: 0.88rem; color: {sidebar_title_color}; font-weight: 700; margin-top: 2px;">Consultoría de IA & Robótica</div>
+    <div style="font-size: 0.78rem; color: #00d2ff; font-weight: 600;">Inteligencia Tecnológica</div>
 </div>
 """, unsafe_allow_html=True)
 
-# KPIs con Estilo Executive
+# KPIs Principales
 col_k1, col_k2, col_k3, col_k4 = st.columns(4)
 with col_k1:
     st.markdown(f"""
@@ -790,11 +588,11 @@ with col_k1:
     </div>
     """, unsafe_allow_html=True)
 with col_k2:
-    alt_funds_count = sum(1 for item in news_data if item.get("category") == "FONDOS ALTERNATIVOS")
+    robotics_count = sum(1 for item in news_data if item.get("category") == "ROBÓTICA & EMBODIED AI")
     st.markdown(f"""
-    <div class="kpi-card" style="border-color: {'rgba(236, 72, 153, 0.4)' if is_dark else '#f472b6'};">
-        <div class="kpi-label" style="color: #db2777;">Fondos Alternativos ⚡</div>
-        <div class="kpi-value" style="color: #ec4899;">{alt_funds_count}</div>
+    <div class="kpi-card" style="border-color: {'rgba(224, 36, 195, 0.5)' if is_dark else '#f472b6'};">
+        <div class="kpi-label" style="color: #e024c3;">Robótica & Embodied 🦾</div>
+        <div class="kpi-value" style="color: #ec4899;">{robotics_count}</div>
     </div>
     """, unsafe_allow_html=True)
 with col_k3:
@@ -802,37 +600,37 @@ with col_k3:
     st.markdown(f"""
     <div class="kpi-card">
         <div class="kpi-label">Mis Favoritos ⭐</div>
-        <div class="kpi-value" style="color: #d97706;">{fav_count}</div>
+        <div class="kpi-value" style="color: #fbbf24;">{fav_count}</div>
     </div>
     """, unsafe_allow_html=True)
 with col_k4:
     sources_count = len(set(item["source"] for item in news_data if item.get("source")))
     st.markdown(f"""
     <div class="kpi-card">
-        <div class="kpi-label">Fuentes Activas 🌐</div>
-        <div class="kpi-value" style="color: #0284c7;">{sources_count}</div>
+        <div class="kpi-label">Fuentes Globales 🌐</div>
+        <div class="kpi-value" style="color: #00d2ff;">{sources_count}</div>
     </div>
     """, unsafe_allow_html=True)
 
 st.markdown("<br>", unsafe_allow_html=True)
 
-# Hashtags de Tendencias
-st.markdown("##### 🔥 Tendencias & Módulos Clave:")
+# Filtro de Tendencias Rápidas
+st.markdown("##### 🔥 Temáticas Clave & Tendencias Tecnológicas:")
 tag_cols = st.columns(6)
-all_tags = ["Todos", "#FondosAlternativos", "#FamilyOffice", "#PrivateEquity", "#NormativaRIS", "#TecnologiaIA"]
+all_tags = ["Todos", "#Robótica", "#LLMs", "#HardwareNVIDIA", "#AgentesIA", "#EUAIAct"]
 for i, tag in enumerate(all_tags):
-    if tag_cols[i].button(tag, key=f"btn_tag_{i}", use_container_width=True):
+    if tag_cols[i].button(tag, key=f"btn_ai_tag_{i}", use_container_width=True):
         st.session_state["selected_tag"] = tag
 
 # Pestañas Principales
 tab_feed, tab_chat, tab_favorites, tab_digest = st.tabs([
-    "📰 Feed de Noticias", 
-    "🤖 Pregunta a tu Feed (Chat RAG)", 
-    "⭐ Mis Favoritos", 
-    "📝 Generar Digest Diario"
+    "📰 Feed IA & Robótica", 
+    "🤖 Asistente Consultoría (Chat RAG)", 
+    "⭐ Artículos Guardados", 
+    "📝 Morning AI Briefing"
 ])
 
-# Aplicar Filtros y Garantizar Unicidad de IDs
+# Filtrado de Artículos
 filtered_news = news_data
 unique_news = []
 seen_ids = set()
@@ -866,19 +664,19 @@ if selected_category != "Todas":
 if selected_sentiment != "Todos":
     filtered_news = [item for item in filtered_news if item.get("sentiment") == selected_sentiment]
 
-# Función para renderizar tarjeta de noticia con key única por pestaña
-def render_impeccable_card(item: dict, key_prefix: str = "feed"):
-    is_alt = item.get("category") == "FONDOS ALTERNATIVOS"
-    card_class = "news-card-container news-card-alt" if is_alt else "news-card-container"
-    category_badge_class = "badge-alt-category" if is_alt else "badge-category"
+# Renderizado de Tarjeta de Noticia
+def render_ai_news_card(item: dict, key_prefix: str = "feed"):
+    is_robotics = item.get("category") == "ROBÓTICA & EMBODIED AI"
+    card_class = "news-card-container news-card-robotics" if is_robotics else "news-card-container"
+    category_badge_class = "badge-robotics-category" if is_robotics else "badge-category"
     
-    sentiment = item.get("sentiment", "Neutro")
-    if sentiment == "Oportunidad":
-        tone_badge_class = "badge-tone-opportunity"
-    elif sentiment == "Alerta Regulatoria":
+    sentiment = item.get("sentiment", "Innovación")
+    if sentiment in ["Innovación", "Oportunidad"]:
+        tone_badge_class = "badge-tone-innovation"
+    elif sentiment == "Alerta":
         tone_badge_class = "badge-tone-alert"
     else:
-        tone_badge_class = "badge-tone-neutral"
+        tone_badge_class = "badge-tone-trend"
         
     is_fav = item["id"] in st.session_state["favorites"]
     fav_icon = "⭐ Guardada" if is_fav else "☆ Guardar"
@@ -886,8 +684,8 @@ def render_impeccable_card(item: dict, key_prefix: str = "feed"):
     c_card, c_action = st.columns([0.88, 0.12])
     with c_card:
         hashtags_display = ' '.join(item.get('hashtags', [])) if isinstance(item.get('hashtags'), list) else ""
-        action_btn_style = "text-decoration: none; font-weight: 700; color: #38bdf8; font-size: 0.88rem; background: rgba(56, 189, 248, 0.1); padding: 6px 14px; border-radius: 8px; border: 1px solid rgba(56, 189, 248, 0.2);" if is_dark else "text-decoration: none; font-weight: 700; color: #0284c7; font-size: 0.88rem; background: #e0f2fe; padding: 6px 14px; border-radius: 8px; border: 1px solid #7dd3fc;"
-        tag_color = "#38bdf8" if is_dark else "#0284c7"
+        action_btn_style = "text-decoration: none; font-weight: 700; color: #00d2ff; font-size: 0.88rem; background: rgba(0, 210, 255, 0.1); padding: 6px 14px; border-radius: 8px; border: 1px solid rgba(0, 210, 255, 0.25);" if is_dark else "text-decoration: none; font-weight: 700; color: #0284c7; font-size: 0.88rem; background: #e0f2fe; padding: 6px 14px; border-radius: 8px; border: 1px solid #7dd3fc;"
+        tag_color = "#00d2ff" if is_dark else "#0284c7"
         date_color = "#94a3b8" if is_dark else "#64748b"
         
         st.markdown(f"""
@@ -895,175 +693,137 @@ def render_impeccable_card(item: dict, key_prefix: str = "feed"):
             <div style="display: flex; align-items: center; justify-content: space-between;">
                 <div>
                     <span class="badge-source">🌐 {item.get('source', 'Fuente')}</span>
-                    <span class="{category_badge_class}">⚡ {item.get('category', 'General')}</span>
-                    <span class="{tone_badge_class}">{item.get('sentiment_badge', '🟡 Neutro')}</span>
+                    <span class="{category_badge_class}">⚡ {item.get('category', 'IA')}</span>
+                    <span class="{tone_badge_class}">{item.get('sentiment_badge', '🚀 Innovación')}</span>
                 </div>
-                <span style="color: {date_color}; font-size: 0.82rem; font-weight: 600;">📅 {item.get('date', '')}</span>
+                <div style="font-size: 0.82rem; color: {date_color}; font-weight: 600;">
+                    📅 {item.get('date', today_date_str)}
+                </div>
             </div>
-            <a href="{item.get('url', '#')}" target="_blank" class="news-title-link">{item.get('title', '')}</a>
-            <div class="news-summary-text">{item.get('summary', '')}</div>
-            <div style="margin-top: 14px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;">
-                <span style="font-size: 0.82rem; color: {tag_color}; font-weight: 600;">{hashtags_display}</span>
-                <a href="{item.get('url', '#')}" target="_blank" style="{action_btn_style}">Leer artículo original en {item.get('source', 'fuente')} ↗</a>
+            
+            <a href="{item.get('url', '#')}" target="_blank" class="news-title-link">
+                {item.get('title', 'Sin título')}
+            </a>
+            
+            <div class="news-summary-text">
+                {item.get('summary', '')}
+            </div>
+            
+            <div style="margin-top: 16px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px;">
+                <div style="font-size: 0.82rem; color: {tag_color}; font-weight: 700;">
+                    {hashtags_display}
+                </div>
+                <a href="{item.get('url', '#')}" target="_blank" style="{action_btn_style}">
+                    🔗 Leer Artículo Original ↗
+                </a>
             </div>
         </div>
         """, unsafe_allow_html=True)
+        
     with c_action:
-        st.markdown("<div style='height: 25px;'></div>", unsafe_allow_html=True)
-        if st.button(fav_icon, key=f"{key_prefix}_fav_{item['id']}"):
-            db.toggle_favorite(item["id"])
-            st.session_state["favorites"] = db.get_favorites()
+        st.markdown("<div style='height: 24px;'></div>", unsafe_allow_html=True)
+        btn_key = f"fav_btn_{key_prefix}_{item['id']}"
+        if st.button(fav_icon, key=btn_key, use_container_width=True):
+            if is_fav:
+                db.remove_favorite(item["id"])
+                st.session_state["favorites"].remove(item["id"])
+                st.toast(f"Artículo eliminado de favoritos", icon="🗑️")
+            else:
+                db.add_favorite(item["id"])
+                st.session_state["favorites"].append(item["id"])
+                st.toast(f"Artículo guardado en favoritos", icon="⭐")
             st.rerun()
 
-# Pestaña 1: Feed de Noticias
+# PESTAÑA 1: FEED DE NOTICIAS
 with tab_feed:
-    if st.session_state["selected_tag"] != "Todos":
-        st.info(f"Filtro por hashtag activo: **{st.session_state['selected_tag']}**")
-        
+    st.markdown(f"#### 📡 Mostrando **{len(filtered_news)}** novedades tecnológicas")
     if not filtered_news:
-        if search_term:
-            st.warning(f"No hay noticias archivadas en el feed local que contengan la palabra **'{search_term}'**.")
-            st.info(f"💡 **Tip**: La Búsqueda Global filtra sobre las noticias del día guardadas en la base de datos local. Si buscas análisis sobre un tema externo (como *'{search_term}'*), utiliza el asistente **🤖 Pregunta a tu Feed (Chat RAG)**.")
-        else:
-            st.warning("No se encontraron noticias que coincidan con los filtros aplicados.")
+        st.info("No se han encontrado noticias que coincidan con los filtros seleccionados.")
     else:
         for item in filtered_news:
-            render_impeccable_card(item, key_prefix="feed")
+            render_ai_news_card(item, key_prefix="main_feed")
 
-# Pestaña 2: Chat RAG
+# PESTAÑA 2: ASISTENTE CONSULTORÍA (CHAT RAG)
 with tab_chat:
-    st.markdown("### 🤖 Asistente de Inteligencia sobre el Feed")
-    st.caption("Respuesta contextual inmediata basada en el feed diario analizado por Google Gemini 3.6 Flash.")
+    st.markdown("### 🤖 Asistente Estratégico de Consultoría de IA & Robótica")
+    st.markdown("Formula preguntas sobre modelos de lenguaje, infraestructura de cómputo, directivas regulatorias o robótica humanoide con base en las noticias capturadas.")
     
-    # Sugerencias rápidas
-    st.markdown("**💡 Consultas sugeridas:**")
-    q_col1, q_col2, q_col3 = st.columns(3)
-    quick_query = None
-    with q_col1:
-        if st.button("⚡ Fondos Alternativos & PE", use_container_width=True, key="quick_alt"):
-            quick_query = "¿Cuáles son las principales novedades y oportunidades en Fondos Alternativos y Mercados Privados hoy?"
-    with q_col2:
-        if st.button("⚖️ Novedades Normativas RIS", use_container_width=True, key="quick_reg"):
-            quick_query = "¿Qué novedades normativas, regulación o alertas regulatorias destacan en el feed?"
-    with q_col3:
-        if st.button("🏛️ Movimientos Banca Privada", use_container_width=True, key="quick_pb"):
-            quick_query = "¿Qué fichajes, entidades o movimientos estratégicos se mencionan en Banca Privada?"
-
-    # Formulario de entrada (permite pulsar Enter o hacer clic)
-    with st.form(key="chat_rag_form", clear_on_submit=True):
-        f_col1, f_col2 = st.columns([5, 1])
-        with f_col1:
-            form_query = st.text_input(
-                "Pregunta al asistente:",
-                placeholder="Escribe tu consulta y pulsa Enter (ej. ¿Qué impacto tiene la directiva RIS?)...",
-                label_visibility="collapsed"
-            )
-        with f_col2:
-            submit_btn = st.form_submit_button("🚀 Consultar", type="primary", use_container_width=True)
-
-    query_to_process = None
-    if quick_query:
-        query_to_process = quick_query
-    elif submit_btn and form_query.strip():
-        query_to_process = form_query.strip()
-
-    if query_to_process:
-        with st.spinner("Procesando consulta con Google Gemini 3.6 Flash..."):
-            answer = enricher.ask_feed(query_to_process, news_data)
-            st.session_state["chat_history"].append({"user": query_to_process, "assistant": answer, "time": datetime.now().strftime("%H:%M")})
-
-    # Mostrar historial de conversación
-    if st.session_state["chat_history"]:
-        st.markdown("---")
-        h_col1, h_col2 = st.columns([5, 1])
-        with h_col1:
-            st.markdown("#### 💬 Conversación")
-        with h_col2:
-            if st.button("🗑️ Limpiar Chat", use_container_width=True, key="clear_chat_btn"):
-                st.session_state["chat_history"] = []
+    # Preguntas sugeridas
+    col_q1, col_q2 = st.columns(2)
+    with col_q1:
+        if st.button("🦾 ¿Qué avances recientes hay en robots humanoides y manipulación?", use_container_width=True, key="btn_sug_1"):
+            st.session_state["chat_history"].append({"role": "user", "text": "¿Qué avances recientes hay en robots humanoides y manipulación industrial?"})
+            with st.spinner("Analizando fuentes del feed con Gemini AI..."):
+                ans = enricher.ask_feed("¿Qué avances recientes hay en robots humanoides y manipulación industrial?", news_data)
+                st.session_state["chat_history"].append({"role": "assistant", "text": ans})
+                st.rerun()
+        if st.button("💻 ¿Cuáles son las novedades en GPUs, clusters y hardware NVIDIA?", use_container_width=True, key="btn_sug_2"):
+            st.session_state["chat_history"].append({"role": "user", "text": "¿Cuáles son las novedades en GPUs, clusters y hardware NVIDIA?"})
+            with st.spinner("Analizando fuentes del feed con Gemini AI..."):
+                ans = enricher.ask_feed("¿Cuáles son las novedades en GPUs, clusters y hardware NVIDIA?", news_data)
+                st.session_state["chat_history"].append({"role": "assistant", "text": ans})
+                st.rerun()
+    with col_q2:
+        if st.button("🛠️ ¿Cómo impacta Model Context Protocol (MCP) en arquitecturas de agentes?", use_container_width=True, key="btn_sug_3"):
+            st.session_state["chat_history"].append({"role": "user", "text": "¿Cómo impacta Model Context Protocol (MCP) en arquitecturas de agentes?"})
+            with st.spinner("Analizando fuentes del feed con Gemini AI..."):
+                ans = enricher.ask_feed("¿Cómo impacta Model Context Protocol (MCP) en arquitecturas de agentes?", news_data)
+                st.session_state["chat_history"].append({"role": "assistant", "text": ans})
+                st.rerun()
+        if st.button("⚖️ ¿Qué requisitos exige el EU AI Act para sistemas en clientes corporativos?", use_container_width=True, key="btn_sug_4"):
+            st.session_state["chat_history"].append({"role": "user", "text": "¿Qué requisitos exige el EU AI Act para sistemas en clientes corporativos?"})
+            with st.spinner("Analizando fuentes del feed con Gemini AI..."):
+                ans = enricher.ask_feed("¿Qué requisitos exige el EU AI Act para sistemas en clientes corporativos?", news_data)
+                st.session_state["chat_history"].append({"role": "assistant", "text": ans})
                 st.rerun()
 
-        for idx, chat in enumerate(reversed(st.session_state["chat_history"])):
-            with st.chat_message("user"):
-                st.markdown(f"**{chat['user']}** <span style='font-size:0.75rem; opacity:0.6;'>({chat.get('time', '')})</span>", unsafe_allow_html=True)
-            with st.chat_message("assistant", avatar="🤖"):
-                st.markdown(chat["assistant"])
-    else:
-        st.info("💡 Haz una pregunta en el recuadro superior o pulsa cualquiera de las consultas sugeridas para comenzar.")
+    st.markdown("---")
+    
+    # Historial de conversación
+    for msg in st.session_state["chat_history"]:
+        if msg["role"] == "user":
+            st.markdown(f"**👤 Consultor:** {msg['text']}")
+        else:
+            st.markdown(msg['text'])
+            st.markdown("---")
+            
+    user_query = st.text_input("💬 Consulta técnica o estratégica:", placeholder="Ej. ¿Qué modelos de código abierto son más eficientes para despliegue local?", key="rag_user_input")
+    if st.button("Enviar Consulta", type="primary", key="btn_send_rag"):
+        if user_query.strip():
+            st.session_state["chat_history"].append({"role": "user", "text": user_query})
+            with st.spinner("Evaluando feed y generando dictamen técnico..."):
+                ans = enricher.ask_feed(user_query, news_data)
+                st.session_state["chat_history"].append({"role": "assistant", "text": ans})
+                st.rerun()
 
-# Pestaña 3: Mis Favoritos
+# PESTAÑA 3: MIS FAVORITOS
 with tab_favorites:
-    st.markdown("### ⭐ Guardados para Lectura Posterior")
+    st.markdown("### ⭐ Artículos de IA Guardados para Análisis")
     fav_items = [item for item in news_data if item["id"] in st.session_state["favorites"]]
     if not fav_items:
-        st.info("No has guardado noticias aún. Utiliza el botón '☆ Guardar' en cualquier tarjeta del Feed.")
+        st.info("Aún no tienes artículos guardados. Pulsa en el botón '☆ Guardar' de cualquier tarjeta para agregarlo a esta lista.")
     else:
+        st.markdown(f"Tienes **{len(fav_items)} artículos** marcados:")
         for item in fav_items:
-            render_impeccable_card(item, key_prefix="favtab")
+            render_ai_news_card(item, key_prefix="fav_tab")
 
-# Pestaña 4: Generar Digest
+# PESTAÑA 4: MORNING AI BRIEFING
 with tab_digest:
-    st.markdown("### 📝 Generador de Digest Diario")
-    st.caption("Compila y descarga el resumen ejecutivo diario listo para distribuir a clientes o equipo.")
+    st.markdown("### 📝 Generador de Morning AI Briefing Ejecutivo")
+    st.markdown("Compila instantáneamente un informe diario en formato Markdown para compartir en canales de Slack, Teams o preparar la reunión diaria del equipo de consultoría.")
     
-    if st.button("✨ Generar Nuevo Digest con Gemini"):
-        with st.spinner("Redactando informe ejecutivo con Gemini 3.6 Flash..."):
-            st.session_state["digest_text"] = enricher.generate_daily_digest(news_data)
+    if st.button("⚡ Generar Informe de Hoy", type="primary", key="btn_gen_digest"):
+        with st.spinner("Compilando análisis de novedades de IA y Robótica..."):
+            digest_content = enricher.generate_daily_digest(news_data)
+            st.session_state["generated_digest"] = digest_content
             
-    digest_text = st.session_state.get("digest_text", enricher.generate_daily_digest(news_data))
-    
-    digest_bg = "#0f172a" if is_dark else "#ffffff"
-    digest_border = "rgba(56, 189, 248, 0.35)" if is_dark else "#cbd5e1"
-    digest_shadow = "rgba(0,0,0,0.5)" if is_dark else "rgba(0,0,0,0.06)"
-    
-    st.markdown(f"""
-    <div style="background-color: {digest_bg}; border: 1px solid {digest_border}; border-radius: 14px; padding: 28px; margin-top: 15px; margin-bottom: 20px; box-shadow: 0 8px 30px {digest_shadow};">
-    """, unsafe_allow_html=True)
-    
-    st.markdown(digest_text)
-    
-    st.markdown("</div>", unsafe_allow_html=True)
-    
-    st.download_button(
-        label="📥 Descargar Digest en Markdown (.md)",
-        data=digest_text,
-        file_name=f"Digest_Financiero_{datetime.now().strftime('%Y%m%d')}.md",
-        mime="text/markdown"
-    )
-
-# --- DISCLAIMER Y CRÉDITOS TÉCNICOS ---
-st.markdown("<br><hr style='border-color: rgba(128,128,128,0.2);'>", unsafe_allow_html=True)
-with st.expander("ℹ️ Acerca de esta herramienta, Metodología, LLM y Créditos"):
-    st.markdown("""
-    ### ⚡ Terminal Financiero & Feed de Inteligencia de Mercado
-
-    **👨‍💻 Creador & Autor:**  
-    **Raúl Martín** — *Dpto. Banca Privada (Banco Mediolanum)*
-
-    ---
-
-    #### 🏗️ ¿Cómo se ha desarrollado esta aplicación?
-    - **Arquitectura:** Aplicación interactiva de alto rendimiento desarrollada en **Python** sobre el framework **Streamlit**, diseñada con un sistema visual adaptable (*Dark Executive Glassmorphism* y *Light Executive Mode*).
-    - **Almacenamiento:** Base de datos relacional persistente **SQLite (`news_feed.db`)** que almacena el histórico diario, favoritos y metadatos de clasificación.
-    - **Extracción de Datos:** Scraping web y agregación RSS en tiempo real (mediante `httpx`, `BeautifulSoup4` y `feedparser`) sobre las principales cabeceras del sector financiero:
-      - *Funds People* (incluyendo sección especializada *Alterforum*)
-      - *Funds Society*
-      - *EFPA España*
-      - *Citywire*
-
-    ---
-
-    #### 🤖 Modelos de Inteligencia Artificial (LLM) Utilizados
-    - **Modelo Principal:** **`Google Gemini 3.6 Flash`** (con fallback de alta disponibilidad a **`Gemini 3.5 Flash`**) integrado mediante el SDK oficial de última generación `google-genai`.
-    - **Capacidades de IA:**
-      1. **Clasificación Taxonómica y Detección de Sentimiento:** Categorización automática en nichos (*FONDOS ALTERNATIVOS, Banca Privada, Mercados Privados, Normativa & Regulaciones, Tecnología & IA*) y evaluación del tono de mercado (*🟢 Oportunidad, 🔴 Alerta Regulatoria, 🟡 Neutro*).
-      2. **Asistente Conversacional RAG (Retrieval-Augmented Generation):** Motor de búsqueda semántica y contextual en la pestaña *Pregunta a tu Feed* para responder dudas específicas de asesores con citas directas.
-      3. **Generador de Digest Ejecutivo:** Síntesis y redacción estructurada en Markdown del pulso del mercado diario.
-
-    ---
-
-    #### ⚖️ Disclaimer Legal
-    *Esta herramienta ha sido creada como soporte de inteligencia de mercado y productividad interna para asesores de Banca Privada. Toda la información, titulares y enlaces pertenecen a sus respectivas fuentes editoriales de origen.*
-    """)
-
-
+    if "generated_digest" in st.session_state:
+        st.markdown("---")
+        st.download_button(
+            label="📥 Descargar Briefing (.md)",
+            data=st.session_state["generated_digest"],
+            file_name=f"morning_ai_briefing_{datetime.now().strftime('%Y%m%d')}.md",
+            mime="text/markdown",
+            key="btn_download_digest"
+        )
+        st.markdown(st.session_state["generated_digest"])

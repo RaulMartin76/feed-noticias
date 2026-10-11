@@ -2,11 +2,10 @@ import sqlite3
 import json
 import os
 from typing import List, Dict, Any
-
 import tempfile
 
 def get_writable_db_path() -> str:
-    local_path = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "news_feed.db")
+    local_path = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "news_ai_feed.db")
     try:
         test_file = local_path + ".test"
         with open(test_file, "w") as f:
@@ -14,7 +13,7 @@ def get_writable_db_path() -> str:
         os.remove(test_file)
         return local_path
     except Exception:
-        return os.path.join(tempfile.gettempdir(), "news_feed.db")
+        return os.path.join(tempfile.gettempdir(), "news_ai_feed.db")
 
 DB_PATH = get_writable_db_path()
 
@@ -78,8 +77,8 @@ class DatabaseManager:
                     item.get("category", "General"),
                     item.get("date"),
                     item.get("summary"),
-                    item.get("sentiment", "Neutro"),
-                    item.get("sentiment_badge", "🟡 Neutro"),
+                    item.get("sentiment", "Innovación"),
+                    item.get("sentiment_badge", "🚀 Innovación"),
                     json.dumps(item.get("hashtags", [])),
                     json.dumps(item.get("entities", []))
                 ))
@@ -88,7 +87,7 @@ class DatabaseManager:
     def get_all_news(self) -> List[Dict[str, Any]]:
         with self._get_connection() as conn:
             cursor = conn.cursor()
-            cursor.execute("SELECT * FROM news ORDER BY date DESC")
+            cursor.execute("SELECT * FROM news ORDER BY date DESC, saved_at DESC")
             rows = cursor.fetchall()
             
             result = []
@@ -99,24 +98,21 @@ class DatabaseManager:
                 result.append(item)
             return result
 
-    def toggle_favorite(self, news_id: str) -> bool:
-        with self._get_connection() as conn:
-            cursor = conn.cursor()
-            cursor.execute("SELECT news_id FROM favorites WHERE news_id = ?", (news_id,))
-            exists = cursor.fetchone()
-            
-            if exists:
-                cursor.execute("DELETE FROM favorites WHERE news_id = ?", (news_id,))
-                conn.commit()
-                return False
-            else:
-                cursor.execute("INSERT INTO favorites (news_id) VALUES (?)", (news_id,))
-                conn.commit()
-                return True
-
     def get_favorites(self) -> List[str]:
         with self._get_connection() as conn:
             cursor = conn.cursor()
             cursor.execute("SELECT news_id FROM favorites")
             rows = cursor.fetchall()
             return [row["news_id"] for row in rows]
+
+    def add_favorite(self, news_id: str):
+        with self._get_connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute("INSERT OR IGNORE INTO favorites (news_id) VALUES (?)", (news_id,))
+            conn.commit()
+
+    def remove_favorite(self, news_id: str):
+        with self._get_connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute("DELETE FROM favorites WHERE news_id = ?", (news_id,))
+            conn.commit()
