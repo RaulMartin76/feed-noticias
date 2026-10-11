@@ -1,51 +1,43 @@
-# 🤖 Terminal IA & Robótica • Feed de Inteligencia Tecnológica
+# ⚡ VADEMECUM HUB NEWS
 
-> **Plataforma de Inteligencia de Mercado en Tiempo Real para Consultoría de Inteligencia Artificial y Robótica**
+> **Plataforma de Inteligencia Tecnológica en Tiempo Real para Consultoría de IA & Robótica**
+
+Inspirada en el sistema de diseño oficial de **VADEMECUM HUB** (paleta cálida en obsidiana `#0e0d0c`, marfil `#f4efe6`, acentos en oro imperial `#c9a227` y esmeralda petróleo `#2f6f6a`).
 
 ---
 
 ## 📌 Visión General
 
-El **Terminal IA & Robótica** es una solución automatizada diseñada para monitorear, categorizar y enriquecer las novedades diarias de vanguardia tecnológica publicadas a nivel global:
+**VADEMECUM HUB NEWS** monitoriza de forma continua las novedades mundiales más críticas en inteligencia artificial y robótica para equipos de consultoría, ingeniería y estrategia empresarial:
 
 - 🚀 **TechCrunch AI**
 - 📰 **The Verge AI**
 - 🔬 **MIT Technology Review**
-- ⚡ **MarkTechPost (AI Research & Frameworks)**
+- ⚡ **MarkTechPost (AI Research & Tools)**
 - 🦾 **IEEE Spectrum (Robotics)**
 - 🦾 **The Robot Report (Industrial & Humanoid Robotics)**
 - 🤗 **Hugging Face Blog**
 - 🌐 **Wired AI**
 
-La plataforma integra inteligencia artificial (**Google Gemini AI**) para sintetizar cada noticia en viñetas ejecutivas en español, asignar impacto tecnológico, responder consultas técnicas de consultoría (*Chat RAG sobre el Feed*) y redactar el informe diario (*Morning AI Briefing*).
-
 ---
 
 ## 🔥 Funcionalidades Clave
 
-1. **Rastreo Global en Vivo**: Extracción directa de titulares y resúmenes de los principales centros de noticias de IA y robótica mundiales.
-2. **Especial Robótica & Embodied AI**: Módulo destacado para seguimiento prioritario de humanoides (Figure, Boston Dynamics, Tesla Optimus), visión-acción y automatización física.
-3. **🤖 Asistente de Consultoría (Chat RAG)**: Analista virtual impulsado por Gemini AI que responde dudas técnicas, comparativas de modelos y frameworks (MCP, LangGraph) y normativas (EU AI Act).
-4. **📝 Generador de Morning AI Briefing**: Compilación instantánea de resúmenes ejecutivos diarios descargables en `.md`.
-5. **⭐ Artículos Guardados**: Persistencia en base de datos local SQLite para lectura y preparación de propuestas a clientes.
-6. **🎨 Interfaz Cyber Dark & Tech Light**: Diseño de alta legibilidad optimizado para entornos de ingeniería y consultoría.
+1. **Radar Global en Vivo**: Extracción directa de las novedades tecnológicas del día.
+2. **Especial Robótica & Embodied AI**: Tratamiento visual prioritario con acento dorado imperial para robots humanoides y automatización física.
+3. **🤖 Asistente Vademecum (Chat RAG)**: Consultas técnicas y estratégicas con Google Gemini AI sobre las noticias recopiladas.
+4. **📝 Vademecum Daily Briefing**: Informes ejecutivos diarios listos para descargar y compartir.
+5. **🎨 Sistema de Diseño Vademecum**: Modo oscuro *Vademecum Dark* y modo claro *Vademecum Light (Parchment)* con tipografías `Outfit`, `Plus Jakarta Sans` y `IBM Plex Mono`.
 
 ---
 
 ## 💻 Ejecución Local
 
-1. **Instalar dependencias**:
+1. Instalar dependencias:
    ```bash
    pip install -r requirements.txt
    ```
-
-2. **Configurar la Clave de Gemini AI**:
-   Crea un archivo `.env` en la raíz con tu clave API de Gemini:
-   ```env
-   GEMINI_API_KEY=tu_api_key_aqui
-   ```
-
-3. **Lanzar la Aplicación**:
+2. Ejecutar la aplicación:
    ```bash
    streamlit run frontend/app.py
    ```

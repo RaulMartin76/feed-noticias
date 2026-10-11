@@ -3,6 +3,7 @@ import pandas as pd
 from datetime import datetime
 import sys
 import os
+import base64
 from dotenv import load_dotenv
 
 # Cargar variables del entorno desde .env
@@ -18,8 +19,8 @@ from backend.ai_enricher import AIEnricher
 from backend.db_manager import DatabaseManager
 
 st.set_page_config(
-    page_title="Terminal IA & Robótica • Feed de Inteligencia Tecnológica",
-    page_icon="🤖",
+    page_title="VADEMECUM HUB NEWS • Radar de IA & Robótica",
+    page_icon="⚡",
     layout="wide",
     initial_sidebar_state="expanded"
 )
@@ -43,37 +44,74 @@ if "last_updated" not in st.session_state:
 if "chat_history" not in st.session_state:
     st.session_state["chat_history"] = []
 
-# Cargar favoritos desde la base de datos
 st.session_state["favorites"] = db.get_favorites()
 
-# --- SIDEBAR: PANEL DE CONTROL ---
-st.sidebar.markdown("### 🎛️ Terminal de Control")
+# Cargar logo de Vademecum en base64 para uso inline
+LOGO_PATH = os.path.join(CURRENT_DIR, "assets", "logo.jpg")
+logo_b64 = ""
+if os.path.exists(LOGO_PATH):
+    try:
+        with open(LOGO_PATH, "rb") as img_f:
+            logo_b64 = base64.b64encode(img_f.read()).decode("utf-8")
+    except Exception:
+        logo_b64 = ""
 
-# Selector de Tema
+# --- SIDEBAR: PANEL VADEMECUM HUB ---
+if logo_b64:
+    st.sidebar.markdown(f"""
+    <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 12px;">
+        <img src="data:image/jpeg;base64,{logo_b64}" style="width: 44px; height: 44px; border-radius: 10px; border: 1px solid #c9a227; object-fit: cover;" />
+        <div>
+            <div style="font-family: 'Outfit', sans-serif; font-size: 1.15rem; font-weight: 800; color: #f4efe6; letter-spacing: -0.01em;">VADEMECUM HUB</div>
+            <div style="font-size: 0.72rem; color: #c9a227; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em;">NEWS & INTELLIGENCE</div>
+        </div>
+    </div>
+    """, unsafe_allow_html=True)
+else:
+    st.sidebar.markdown("""
+    <div style="margin-bottom: 12px;">
+        <div style="font-family: 'Outfit', sans-serif; font-size: 1.25rem; font-weight: 800; color: #f4efe6;">⚡ VADEMECUM HUB</div>
+        <div style="font-size: 0.72rem; color: #c9a227; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em;">NEWS & INTELLIGENCE</div>
+    </div>
+    """, unsafe_allow_html=True)
+
+# Selector de Tema (Vademecum Dark vs Parchment Light)
 theme_mode = st.sidebar.radio(
-    "🎨 Visualización",
-    ["🌙 Modo Cyber Dark", "☀️ Modo Tech Light"],
+    "🎨 Estilo Visual",
+    ["🌙 Vademecum Dark", "☀️ Vademecum Light"],
     index=0 if st.session_state["theme"] == "dark" else 1,
     horizontal=True
 )
 st.session_state["theme"] = "dark" if "Dark" in theme_mode else "light"
 is_dark = st.session_state["theme"] == "dark"
 
-# DESIGN SYSTEM - Estilos CSS Avanzados para Consultoría de IA y Robótica
+# SISTEMA DE DISEÑO VADEMECUM HUB (Inspirado en la paleta oficial: #0e0d0c, #f4efe6, #c9a227, #2e2a24, #161411)
 if is_dark:
     st.markdown("""
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Outfit:wght@400;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500;600&display=swap');
+
+        :root {
+            --bg-vademecum: #0e0d0c;
+            --surface-vademecum: #161411;
+            --card-vademecum: #181512;
+            --border-vademecum: #2e2a24;
+            --accent-gold: #c9a227;
+            --accent-gold-hover: #e5be38;
+            --accent-teal: #2f6f6a;
+            --text-ivory: #f4efe6;
+            --text-muted: #a8a29e;
+        }
 
         html, body, [data-testid="stAppViewContainer"] {
-            background-color: #070913 !important;
+            background-color: var(--bg-vademecum) !important;
             font-family: 'Plus Jakarta Sans', sans-serif !important;
-            color: #f1f5f9 !important;
+            color: var(--text-ivory) !important;
         }
         
         [data-testid="stSidebar"] {
-            background-color: #0c1020 !important;
-            border-right: 1px solid rgba(0, 210, 255, 0.15) !important;
+            background-color: var(--surface-vademecum) !important;
+            border-right: 1px solid var(--border-vademecum) !important;
         }
         [data-testid="stSidebar"] label,
         [data-testid="stSidebar"] p,
@@ -82,7 +120,7 @@ if is_dark:
         [data-testid="stSidebar"] h1,
         [data-testid="stSidebar"] h2,
         [data-testid="stSidebar"] h3 {
-            color: #ffffff !important;
+            color: var(--text-ivory) !important;
             font-weight: 600 !important;
         }
 
@@ -90,13 +128,13 @@ if is_dark:
         .stTextInput input,
         input[type="text"],
         textarea {
-            background-color: #0e1428 !important;
-            color: #ffffff !important;
-            -webkit-text-fill-color: #ffffff !important;
-            border: 1px solid rgba(0, 210, 255, 0.35) !important;
+            background-color: var(--surface-vademecum) !important;
+            color: var(--text-ivory) !important;
+            -webkit-text-fill-color: var(--text-ivory) !important;
+            border: 1px solid var(--border-vademecum) !important;
             border-radius: 10px !important;
             padding: 10px 16px !important;
-            font-size: 0.98rem !important;
+            font-size: 0.96rem !important;
             font-weight: 600 !important;
         }
 
@@ -104,127 +142,143 @@ if is_dark:
         .stTextInput input:focus,
         input[type="text"]:focus,
         textarea:focus {
-            background-color: #151d38 !important;
-            border-color: #00d2ff !important;
-            box-shadow: 0 0 14px rgba(0, 210, 255, 0.4) !important;
+            background-color: #211c17 !important;
+            border-color: var(--accent-gold) !important;
+            box-shadow: 0 0 12px rgba(201, 162, 39, 0.35) !important;
             outline: none !important;
         }
 
-        .hero-header {
-            background: linear-gradient(135deg, rgba(12, 16, 32, 0.95) 0%, rgba(20, 28, 55, 0.85) 50%, rgba(12, 16, 32, 0.95) 100%);
-            backdrop-filter: blur(16px);
-            border: 1px solid rgba(0, 210, 255, 0.2);
+        /* Ambient Hero Header Vademecum */
+        .vademecum-hero {
+            background: radial-gradient(ellipse 90% 80% at 50% -20%, rgba(201, 162, 39, 0.14), transparent 60%),
+                        radial-gradient(ellipse 60% 50% at 100% 30%, rgba(47, 111, 106, 0.12), transparent 50%),
+                        var(--surface-vademecum);
+            border: 1px solid var(--border-vademecum);
             border-radius: 16px;
-            padding: 24px 32px;
+            padding: 26px 34px;
             margin-bottom: 25px;
-            box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.6), inset 0 1px 0 rgba(0, 210, 255, 0.2);
+            box-shadow: 0 12px 36px rgba(0, 0, 0, 0.55), inset 0 1px 0 rgba(201, 162, 39, 0.25);
             display: flex;
             justify-content: space-between;
             align-items: center;
             flex-wrap: wrap;
-            gap: 15px;
+            gap: 18px;
         }
-        .hero-title {
-            font-family: 'Outfit', sans-serif;
-            font-size: 2.2rem;
+        .vademecum-eyebrow {
+            font-size: 0.75rem;
+            color: var(--accent-gold);
             font-weight: 800;
-            background: linear-gradient(135deg, #ffffff 0%, #00d2ff 100%);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
+            text-transform: uppercase;
+            letter-spacing: 0.12em;
+            margin-bottom: 6px;
+        }
+        .vademecum-title {
+            font-family: 'Outfit', sans-serif;
+            font-size: 2.3rem;
+            font-weight: 800;
+            color: var(--text-ivory);
             margin: 0;
             letter-spacing: -0.02em;
+            line-height: 1.1;
         }
-        .hero-subtitle {
-            color: #94a3b8;
+        .vademecum-title span {
+            color: var(--accent-gold);
+        }
+        .vademecum-subtitle {
+            color: var(--text-muted);
             font-size: 0.98rem;
-            margin-top: 6px;
+            margin-top: 8px;
             margin-bottom: 0;
             font-weight: 500;
         }
 
-        .hero-dates-box {
+        .vademecum-dates-box {
             display: flex;
-            background: rgba(15, 23, 42, 0.6);
-            border: 1px solid rgba(0, 210, 255, 0.25);
+            background: rgba(14, 13, 12, 0.85);
+            border: 1px solid var(--border-vademecum);
             border-radius: 12px;
             padding: 10px 18px;
             gap: 16px;
         }
-        .hero-date-item {
+        .vademecum-date-item {
             display: flex;
             flex-direction: column;
         }
-        .hero-date-label {
-            font-size: 0.72rem;
+        .vademecum-date-label {
+            font-size: 0.70rem;
             text-transform: uppercase;
-            color: #00d2ff;
+            color: var(--accent-gold);
             font-weight: 700;
-            letter-spacing: 0.05em;
+            letter-spacing: 0.06em;
         }
-        .hero-date-val {
+        .vademecum-date-val {
             font-size: 0.95rem;
             font-weight: 800;
-            color: #ffffff;
-            font-family: 'JetBrains Mono', monospace;
+            color: var(--text-ivory);
+            font-family: 'IBM Plex Mono', monospace;
         }
 
-        .kpi-card {
-            background: rgba(14, 20, 40, 0.75);
-            border: 1px solid rgba(255, 255, 255, 0.08);
+        /* KPI Cards Vademecum */
+        .vademecum-kpi-card {
+            background: var(--surface-vademecum);
+            border: 1px solid var(--border-vademecum);
             border-radius: 14px;
-            padding: 18px 22px;
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
-            transition: transform 0.2s ease, border-color 0.2s ease;
+            padding: 20px 22px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.35);
+            transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
         }
-        .kpi-card:hover {
-            transform: translateY(-2px);
-            border-color: rgba(0, 210, 255, 0.4);
+        .vademecum-kpi-card:hover {
+            transform: translateY(-3px);
+            border-color: rgba(201, 162, 39, 0.5);
+            box-shadow: 0 8px 26px rgba(201, 162, 39, 0.12);
         }
-        .kpi-label {
-            font-size: 0.8rem;
-            color: #94a3b8;
+        .vademecum-kpi-label {
+            font-size: 0.78rem;
+            color: var(--text-muted);
             font-weight: 700;
             text-transform: uppercase;
-            letter-spacing: 0.05em;
+            letter-spacing: 0.06em;
         }
-        .kpi-value {
-            font-size: 1.85rem;
+        .vademecum-kpi-value {
+            font-size: 1.95rem;
             font-weight: 800;
-            color: #ffffff;
+            color: var(--text-ivory);
             font-family: 'Outfit', sans-serif;
             margin-top: 4px;
         }
 
-        .news-card-container {
-            background: rgba(14, 20, 40, 0.65);
-            border: 1px solid rgba(255, 255, 255, 0.08);
+        /* News Cards Vademecum */
+        .vademecum-card {
+            background: var(--surface-vademecum);
+            border: 1px solid var(--border-vademecum);
             border-radius: 16px;
             padding: 24px;
             margin-bottom: 20px;
-            transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+            transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
             position: relative;
             box-shadow: 0 4px 24px rgba(0, 0, 0, 0.3);
         }
-        .news-card-container:hover {
+        .vademecum-card:hover {
             transform: translateY(-3px);
-            border-color: rgba(0, 210, 255, 0.5);
-            box-shadow: 0 10px 30px -5px rgba(0, 210, 255, 0.2);
+            border-color: var(--accent-gold);
+            box-shadow: 0 10px 32px rgba(201, 162, 39, 0.15);
         }
         
-        .news-card-robotics {
-            background: linear-gradient(135deg, rgba(30, 10, 45, 0.8) 0%, rgba(14, 20, 40, 0.85) 100%) !important;
-            border: 1px solid rgba(224, 36, 195, 0.5) !important;
-            box-shadow: 0 4px 24px rgba(224, 36, 195, 0.15) !important;
+        .vademecum-card-robotics {
+            background: linear-gradient(135deg, rgba(22, 20, 17, 0.95) 0%, rgba(35, 29, 20, 0.9) 100%) !important;
+            border: 1px solid rgba(201, 162, 39, 0.6) !important;
+            box-shadow: 0 4px 24px rgba(201, 162, 39, 0.12) !important;
         }
-        .news-card-robotics:hover {
-            border-color: #e024c3 !important;
-            box-shadow: 0 10px 30px -5px rgba(224, 36, 195, 0.35) !important;
+        .vademecum-card-robotics:hover {
+            border-color: var(--accent-gold-hover) !important;
+            box-shadow: 0 10px 32px rgba(201, 162, 39, 0.25) !important;
         }
 
+        /* Badges Vademecum */
         .badge-source {
-            background: rgba(255, 255, 255, 0.06);
-            border: 1px solid rgba(255, 255, 255, 0.12);
-            color: #94a3b8;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--border-vademecum);
+            color: var(--text-muted);
             padding: 5px 12px;
             border-radius: 8px;
             font-size: 0.78rem;
@@ -233,9 +287,9 @@ if is_dark:
             margin-right: 8px;
         }
         .badge-category {
-            background: rgba(0, 210, 255, 0.12);
-            border: 1px solid rgba(0, 210, 255, 0.35);
-            color: #38bdf8;
+            background: rgba(201, 162, 39, 0.12);
+            border: 1px solid rgba(201, 162, 39, 0.35);
+            color: var(--accent-gold);
             padding: 5px 12px;
             border-radius: 8px;
             font-size: 0.78rem;
@@ -244,20 +298,20 @@ if is_dark:
             margin-right: 8px;
         }
         .badge-robotics-category {
-            background: linear-gradient(135deg, #c026d3 0%, #db2777 100%) !important;
-            color: #ffffff !important;
+            background: linear-gradient(135deg, #c9a227 0%, #b8911f 100%) !important;
+            color: #0e0d0c !important;
             padding: 5px 14px !important;
             border-radius: 8px !important;
             font-size: 0.8rem !important;
             font-weight: 800 !important;
-            box-shadow: 0 2px 10px rgba(219, 39, 119, 0.4) !important;
+            box-shadow: 0 2px 10px rgba(201, 162, 39, 0.35) !important;
             display: inline-block;
             margin-right: 8px;
         }
         .badge-tone-innovation {
-            background: rgba(16, 185, 129, 0.15);
-            border: 1px solid rgba(52, 211, 153, 0.4);
-            color: #34d399;
+            background: rgba(47, 111, 106, 0.18);
+            border: 1px solid rgba(47, 111, 106, 0.5);
+            color: #4ade80;
             padding: 5px 12px;
             border-radius: 8px;
             font-size: 0.78rem;
@@ -267,7 +321,7 @@ if is_dark:
         }
         .badge-tone-alert {
             background: rgba(239, 68, 68, 0.15);
-            border: 1px solid rgba(248, 113, 113, 0.4);
+            border: 1px solid rgba(248, 113, 113, 0.35);
             color: #f87171;
             padding: 5px 12px;
             border-radius: 8px;
@@ -277,9 +331,9 @@ if is_dark:
             margin-right: 8px;
         }
         .badge-tone-trend {
-            background: rgba(245, 158, 11, 0.15);
-            border: 1px solid rgba(251, 191, 36, 0.4);
-            color: #fbbf24;
+            background: rgba(201, 162, 39, 0.15);
+            border: 1px solid rgba(201, 162, 39, 0.4);
+            color: #e5be38;
             padding: 5px 12px;
             border-radius: 8px;
             font-size: 0.78rem;
@@ -292,7 +346,7 @@ if is_dark:
             font-family: 'Outfit', sans-serif;
             font-size: 1.35rem;
             font-weight: 700;
-            color: #f8fafc;
+            color: var(--text-ivory);
             text-decoration: none;
             margin-top: 12px;
             margin-bottom: 10px;
@@ -300,10 +354,10 @@ if is_dark:
             transition: color 0.2s ease;
         }
         .news-title-link:hover {
-            color: #00d2ff;
+            color: var(--accent-gold);
         }
         .news-summary-text {
-            color: #cbd5e1;
+            color: #d6d0c4;
             font-size: 0.98rem;
             line-height: 1.6;
             white-space: pre-line;
@@ -311,120 +365,139 @@ if is_dark:
     </style>
     """, unsafe_allow_html=True)
 else:
-    # MODO TECH LIGHT
+    # MODO VADEMECUM LIGHT (Tech Parchment)
     st.markdown("""
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Outfit:wght@400;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500;600&display=swap');
+
+        :root {
+            --bg-vademecum: #fcfaf7;
+            --surface-vademecum: #ffffff;
+            --border-vademecum: #e7e2d8;
+            --accent-gold: #b08a1c;
+            --text-dark: #1c1917;
+            --text-muted: #78716c;
+        }
 
         html, body, [data-testid="stAppViewContainer"] {
-            background-color: #f8fafc !important;
+            background-color: var(--bg-vademecum) !important;
             font-family: 'Plus Jakarta Sans', sans-serif !important;
-            color: #0f172a !important;
+            color: var(--text-dark) !important;
         }
         
         [data-testid="stSidebar"] {
-            background-color: #ffffff !important;
-            border-right: 1px solid #e2e8f0 !important;
+            background-color: var(--surface-vademecum) !important;
+            border-right: 1px solid var(--border-vademecum) !important;
         }
 
-        .hero-header {
-            background: linear-gradient(135deg, #ffffff 0%, #f1f5f9 50%, #e2e8f0 100%);
-            border: 1px solid #cbd5e1;
+        .vademecum-hero {
+            background: linear-gradient(135deg, #ffffff 0%, #fdfbf7 50%, #f6f2ea 100%);
+            border: 1px solid var(--border-vademecum);
             border-radius: 16px;
-            padding: 24px 32px;
+            padding: 26px 34px;
             margin-bottom: 25px;
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
             display: flex;
             justify-content: space-between;
             align-items: center;
             flex-wrap: wrap;
-            gap: 15px;
+            gap: 18px;
         }
-        .hero-title {
-            font-family: 'Outfit', sans-serif;
-            font-size: 2.2rem;
+        .vademecum-eyebrow {
+            font-size: 0.75rem;
+            color: var(--accent-gold);
             font-weight: 800;
-            color: #0f172a !important;
-            -webkit-text-fill-color: #0f172a !important;
+            text-transform: uppercase;
+            letter-spacing: 0.12em;
+            margin-bottom: 6px;
+        }
+        .vademecum-title {
+            font-family: 'Outfit', sans-serif;
+            font-size: 2.3rem;
+            font-weight: 800;
+            color: var(--text-dark);
             margin: 0;
             letter-spacing: -0.02em;
+            line-height: 1.1;
         }
-        .hero-subtitle {
-            color: #475569;
+        .vademecum-title span {
+            color: var(--accent-gold);
+        }
+        .vademecum-subtitle {
+            color: var(--text-muted);
             font-size: 0.98rem;
-            margin-top: 6px;
+            margin-top: 8px;
             margin-bottom: 0;
             font-weight: 600;
         }
 
-        .hero-dates-box {
+        .vademecum-dates-box {
             display: flex;
             background: #ffffff;
-            border: 1px solid #cbd5e1;
+            border: 1px solid var(--border-vademecum);
             border-radius: 12px;
             padding: 10px 18px;
             gap: 16px;
         }
-        .hero-date-label {
-            font-size: 0.72rem;
+        .vademecum-date-label {
+            font-size: 0.70rem;
             text-transform: uppercase;
-            color: #0284c7;
+            color: var(--accent-gold);
             font-weight: 700;
-            letter-spacing: 0.05em;
+            letter-spacing: 0.06em;
         }
-        .hero-date-val {
+        .vademecum-date-val {
             font-size: 0.95rem;
             font-weight: 800;
-            color: #0f172a;
-            font-family: 'JetBrains Mono', monospace;
+            color: var(--text-dark);
+            font-family: 'IBM Plex Mono', monospace;
         }
 
-        .kpi-card {
-            background: #ffffff;
-            border: 1px solid #e2e8f0;
+        .vademecum-kpi-card {
+            background: var(--surface-vademecum);
+            border: 1px solid var(--border-vademecum);
             border-radius: 14px;
-            padding: 18px 22px;
+            padding: 20px 22px;
             box-shadow: 0 2px 10px rgba(0, 0, 0, 0.04);
         }
-        .kpi-label {
-            font-size: 0.8rem;
-            color: #64748b;
+        .vademecum-kpi-label {
+            font-size: 0.78rem;
+            color: var(--text-muted);
             font-weight: 700;
             text-transform: uppercase;
         }
-        .kpi-value {
-            font-size: 1.85rem;
+        .vademecum-kpi-value {
+            font-size: 1.95rem;
             font-weight: 800;
-            color: #0f172a;
+            color: var(--text-dark);
             font-family: 'Outfit', sans-serif;
             margin-top: 4px;
         }
 
-        .news-card-container {
-            background: #ffffff;
-            border: 1px solid #e2e8f0;
+        .vademecum-card {
+            background: var(--surface-vademecum);
+            border: 1px solid var(--border-vademecum);
             border-radius: 16px;
             padding: 24px;
             margin-bottom: 20px;
             box-shadow: 0 2px 12px rgba(0, 0, 0, 0.04);
             transition: all 0.25s ease;
         }
-        .news-card-container:hover {
+        .vademecum-card:hover {
             transform: translateY(-3px);
-            border-color: #0284c7;
-            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+            border-color: var(--accent-gold);
+            box-shadow: 0 8px 24px rgba(176, 138, 28, 0.12);
         }
         
-        .news-card-robotics {
-            background: linear-gradient(135deg, #fdf2f8 0%, #ffffff 100%) !important;
-            border: 1px solid #f472b6 !important;
-            box-shadow: 0 4px 18px rgba(236, 72, 153, 0.1) !important;
+        .vademecum-card-robotics {
+            background: linear-gradient(135deg, #fffdf8 0%, #ffffff 100%) !important;
+            border: 1px solid #d4af37 !important;
         }
 
         .badge-source {
-            background: #f1f5f9;
-            border: 1px solid #cbd5e1;
-            color: #334155;
+            background: #f5f2eb;
+            border: 1px solid var(--border-vademecum);
+            color: #44403c;
             padding: 5px 12px;
             border-radius: 8px;
             font-size: 0.78rem;
@@ -433,9 +506,9 @@ else:
             margin-right: 8px;
         }
         .badge-category {
-            background: #e0f2fe;
-            border: 1px solid #7dd3fc;
-            color: #0369a1;
+            background: #fbf7ee;
+            border: 1px solid #d4af37;
+            color: var(--accent-gold);
             padding: 5px 12px;
             border-radius: 8px;
             font-size: 0.78rem;
@@ -444,7 +517,7 @@ else:
             margin-right: 8px;
         }
         .badge-robotics-category {
-            background: linear-gradient(135deg, #d946ef 0%, #db2777 100%) !important;
+            background: linear-gradient(135deg, #b08a1c 0%, #c9a227 100%) !important;
             color: #ffffff !important;
             padding: 5px 14px !important;
             border-radius: 8px !important;
@@ -458,17 +531,17 @@ else:
             font-family: 'Outfit', sans-serif;
             font-size: 1.35rem;
             font-weight: 700;
-            color: #0f172a;
+            color: var(--text-dark);
             text-decoration: none;
             margin-top: 12px;
             margin-bottom: 10px;
             display: block;
         }
         .news-title-link:hover {
-            color: #0284c7;
+            color: var(--accent-gold);
         }
         .news-summary-text {
-            color: #334155;
+            color: #44403c;
             font-size: 0.98rem;
             line-height: 1.6;
             white-space: pre-line;
@@ -476,44 +549,45 @@ else:
     </style>
     """, unsafe_allow_html=True)
 
-# Header Principal Hero con Fechas y Título
+# Header Principal Hero VADEMECUM HUB NEWS
 today_date_str = datetime.now().strftime("%d/%m/%Y")
 last_update_str = st.session_state["last_updated"]
 
 st.markdown(f"""
-<div class="hero-header">
+<div class="vademecum-hero">
     <div>
-        <div class="hero-title">⚡ Terminal IA & Robótica • Consultoría Tecnológica</div>
-        <div class="hero-subtitle">Inteligencia Global en Tiempo Real • Modelos Fundacionales • Hardware • Agentes • <b style="color: #e024c3;">ROBÓTICA & EMBODIED AI</b></div>
+        <div class="vademecum-eyebrow">VADEMECUM HUB • RADAR DE INTELIGENCIA ESTRATÉGICA</div>
+        <div class="vademecum-title">VADEMECUM HUB <span>NEWS</span></div>
+        <div class="vademecum-subtitle">Inteligencia Global en Tiempo Real para Consultoría de IA • Modelos • Hardware • <b style="color: #c9a227;">ROBÓTICA & EMBODIED AI</b></div>
     </div>
-    <div class="hero-dates-box">
-        <div class="hero-date-item">
-            <span class="hero-date-label">📅 Fecha Actual</span>
-            <span class="hero-date-val">{today_date_str}</span>
+    <div class="vademecum-dates-box">
+        <div class="vademecum-date-item">
+            <span class="vademecum-date-label">📅 Edición Diaria</span>
+            <span class="vademecum-date-val">{today_date_str}</span>
         </div>
-        <div style="width: 1px; background: rgba(128,128,128,0.25); margin: 0 4px;"></div>
-        <div class="hero-date-item">
-            <span class="hero-date-label">⏱️ Última Sincronización</span>
-            <span class="hero-date-val">{last_update_str}</span>
+        <div style="width: 1px; background: rgba(201, 162, 39, 0.3); margin: 0 4px;"></div>
+        <div class="vademecum-date-item">
+            <span class="vademecum-date-label">⏱️ Sincronización</span>
+            <span class="vademecum-date-val">{last_update_str}</span>
         </div>
     </div>
 </div>
 """, unsafe_allow_html=True)
 
 if st.session_state["just_synced"]:
-    st.toast("⚡ Noticias de IA y Robótica resincronizadas con éxito desde fuentes globales", icon="🚀")
-    st.success("Noticias de IA y Robótica resincronizadas con éxito desde fuentes globales.")
+    st.toast("⚡ Vademecum Hub News resincronizado con éxito desde fuentes globales", icon="🚀")
+    st.success("Vademecum Hub News resincronizado con éxito desde fuentes globales de IA y Robótica.")
     st.session_state["just_synced"] = False
 
-# Función para sincronizar noticias de IA
-def load_and_sync_ai_data(force_sync: bool = False):
+# Cargar y sincronizar datos
+def load_and_sync_vademecum_data(force_sync: bool = False):
     enricher = AIEnricher()
     existing_news = []
     
     try:
         existing_news = db.get_all_news()
     except Exception as e:
-        print(f"[App IA] Error leyendo SQLite: {e}")
+        print(f"[Vademecum] Error leyendo SQLite: {e}")
         existing_news = []
     
     if not existing_news or force_sync:
@@ -527,22 +601,22 @@ def load_and_sync_ai_data(force_sync: bool = False):
             existing_news = db.get_all_news()
             st.session_state["last_updated"] = datetime.now().strftime("%H:%M:%S")
         except Exception as e_sync:
-            print(f"[App IA] Excepción en sincronización, cargando respaldo: {e_sync}")
+            print(f"[Vademecum] Excepción en sincronización, cargando respaldo: {e_sync}")
             from backend.scraper import SEED_NEWS
             existing_news = SEED_NEWS
             
     return existing_news, enricher
 
 # Botón de Sincronización en Sidebar
-if st.sidebar.button("🔄 Sincronizar Noticias Globales", use_container_width=True, type="primary"):
-    with st.spinner("Rastreando portales top de IA & Robótica y enriqueciendo con Gemini AI..."):
-        news_data, enricher = load_and_sync_ai_data(force_sync=True)
+if st.sidebar.button("🔄 Sincronizar Radar Vademecum", use_container_width=True, type="primary"):
+    with st.spinner("Rastreando portales globales de IA y enriqueciendo con Gemini AI..."):
+        news_data, enricher = load_and_sync_vademecum_data(force_sync=True)
         st.session_state["just_synced"] = True
         st.rerun()
 else:
-    news_data, enricher = load_and_sync_ai_data(force_sync=False)
+    news_data, enricher = load_and_sync_vademecum_data(force_sync=False)
 
-search_term = st.sidebar.text_input("🔍 Búsqueda global", placeholder="ej. Humanoides, Blackwell, MCP, LangGraph, EU AI Act...")
+search_term = st.sidebar.text_input("🔍 Búsqueda global en Vademecum", placeholder="ej. Humanoides, Blackwell, MCP, LangGraph, EU AI Act...")
 
 sources = ["Todas"] + sorted(list(set(item["source"] for item in news_data if item.get("source"))))
 selected_source = st.sidebar.selectbox("🌐 Fuente tecnológica", sources)
@@ -555,82 +629,82 @@ selected_sentiment = st.sidebar.selectbox("📊 Impacto / Sentimiento", sentimen
 
 st.sidebar.markdown("---")
 
-ai_status_color = "#10b981" if enricher.client else "#f59e0b"
-ai_status_text = "🟢 Gemini AI Activo" if enricher.client else "🟡 Motor Heurístico"
+ai_status_color = "#10b981" if enricher.client else "#c9a227"
+ai_status_text = "🟢 Gemini AI Activo" if enricher.client else "🟡 Motor Heurístico Vademecum"
 
-sidebar_card_bg = "rgba(14, 20, 40, 0.9)" if is_dark else "#f1f5f9"
-sidebar_card_border = "rgba(0, 210, 255, 0.2)" if is_dark else "#cbd5e1"
-sidebar_title_color = "#ffffff" if is_dark else "#0f172a"
+sidebar_card_bg = "#161411" if is_dark else "#fdfbf7"
+sidebar_card_border = "#2e2a24" if is_dark else "#e7e2d8"
+sidebar_title_color = "#f4efe6" if is_dark else "#1c1917"
 
 st.sidebar.markdown(f"""
 <div style="background: {sidebar_card_bg}; border: 1px solid {sidebar_card_border}; border-radius: 10px; padding: 14px; margin-bottom: 15px;">
-    <div style="font-size: 0.8rem; color: {sidebar_title_color}; font-weight: 700; text-transform: uppercase;">🤖 Inteligencia Artificial</div>
+    <div style="font-size: 0.76rem; color: #c9a227; font-weight: 700; text-transform: uppercase;">🤖 Inteligencia Artificial</div>
     <div style="font-size: 0.9rem; color: {ai_status_color}; font-weight: 700; margin-top: 4px;">{ai_status_text}</div>
-    <div style="font-size: 0.82rem; color: #00d2ff; margin-top: 8px;">💾 BD Local: <b>{len(news_data)} artículos analizados</b></div>
+    <div style="font-size: 0.82rem; color: #a8a29e; margin-top: 8px;">💾 BD Local: <b>{len(news_data)} análisis guardados</b></div>
 </div>
 """, unsafe_allow_html=True)
 
 st.sidebar.markdown(f"""
 <div style="background: {sidebar_card_bg}; border: 1px solid {sidebar_card_border}; border-radius: 10px; padding: 14px;">
-    <div style="font-size: 0.75rem; color: #64748b; font-weight: 700; text-transform: uppercase;">🏢 Entorno</div>
-    <div style="font-size: 0.88rem; color: {sidebar_title_color}; font-weight: 700; margin-top: 2px;">Consultoría de IA & Robótica</div>
-    <div style="font-size: 0.78rem; color: #00d2ff; font-weight: 600;">Inteligencia Tecnológica</div>
+    <div style="font-size: 0.74rem; color: #a8a29e; font-weight: 700; text-transform: uppercase;">⚡ Plataforma</div>
+    <div style="font-size: 0.88rem; color: {sidebar_title_color}; font-weight: 700; margin-top: 2px;">Vademecum Hub</div>
+    <div style="font-size: 0.78rem; color: #c9a227; font-weight: 600;">Consultoría & Formación IA</div>
 </div>
 """, unsafe_allow_html=True)
 
-# KPIs Principales
+# KPIs VADEMECUM HUB
 col_k1, col_k2, col_k3, col_k4 = st.columns(4)
 with col_k1:
     st.markdown(f"""
-    <div class="kpi-card">
-        <div class="kpi-label">Noticias Totales Hoy</div>
-        <div class="kpi-value">{len(news_data)}</div>
+    <div class="vademecum-kpi-card">
+        <div class="vademecum-kpi-label">Novedades Hoy</div>
+        <div class="vademecum-kpi-value">{len(news_data)}</div>
     </div>
     """, unsafe_allow_html=True)
 with col_k2:
     robotics_count = sum(1 for item in news_data if item.get("category") == "ROBÓTICA & EMBODIED AI")
     st.markdown(f"""
-    <div class="kpi-card" style="border-color: {'rgba(224, 36, 195, 0.5)' if is_dark else '#f472b6'};">
-        <div class="kpi-label" style="color: #e024c3;">Robótica & Embodied 🦾</div>
-        <div class="kpi-value" style="color: #ec4899;">{robotics_count}</div>
+    <div class="vademecum-kpi-card" style="border-color: rgba(201, 162, 39, 0.6);">
+        <div class="vademecum-kpi-label" style="color: #c9a227;">Robótica & Embodied 🦾</div>
+        <div class="vademecum-kpi-value" style="color: #c9a227;">{robotics_count}</div>
     </div>
     """, unsafe_allow_html=True)
 with col_k3:
     fav_count = len(st.session_state["favorites"])
     st.markdown(f"""
-    <div class="kpi-card">
-        <div class="kpi-label">Mis Favoritos ⭐</div>
-        <div class="kpi-value" style="color: #fbbf24;">{fav_count}</div>
+    <div class="vademecum-kpi-card">
+        <div class="vademecum-kpi-label">Artículos Guardados ⭐</div>
+        <div class="vademecum-kpi-value" style="color: #e5be38;">{fav_count}</div>
     </div>
     """, unsafe_allow_html=True)
 with col_k4:
     sources_count = len(set(item["source"] for item in news_data if item.get("source")))
     st.markdown(f"""
-    <div class="kpi-card">
-        <div class="kpi-label">Fuentes Globales 🌐</div>
-        <div class="kpi-value" style="color: #00d2ff;">{sources_count}</div>
+    <div class="vademecum-kpi-card">
+        <div class="vademecum-kpi-label">Fuentes Globales 🌐</div>
+        <div class="vademecum-kpi-value" style="color: #2f6f6a;">{sources_count}</div>
     </div>
     """, unsafe_allow_html=True)
 
 st.markdown("<br>", unsafe_allow_html=True)
 
-# Filtro de Tendencias Rápidas
-st.markdown("##### 🔥 Temáticas Clave & Tendencias Tecnológicas:")
+# Tendencias Rápidas
+st.markdown("##### 🔥 Temáticas de Vanguardia en Vademecum:")
 tag_cols = st.columns(6)
 all_tags = ["Todos", "#Robótica", "#LLMs", "#HardwareNVIDIA", "#AgentesIA", "#EUAIAct"]
 for i, tag in enumerate(all_tags):
-    if tag_cols[i].button(tag, key=f"btn_ai_tag_{i}", use_container_width=True):
+    if tag_cols[i].button(tag, key=f"btn_vademecum_tag_{i}", use_container_width=True):
         st.session_state["selected_tag"] = tag
 
 # Pestañas Principales
 tab_feed, tab_chat, tab_favorites, tab_digest = st.tabs([
-    "📰 Feed IA & Robótica", 
-    "🤖 Asistente Consultoría (Chat RAG)", 
+    "📰 Radar Vademecum", 
+    "🤖 Asistente Vademecum (Chat RAG)", 
     "⭐ Artículos Guardados", 
-    "📝 Morning AI Briefing"
+    "📝 Vademecum Daily Briefing"
 ])
 
-# Filtrado de Artículos
+# Filtrado de Noticias
 filtered_news = news_data
 unique_news = []
 seen_ids = set()
@@ -664,10 +738,10 @@ if selected_category != "Todas":
 if selected_sentiment != "Todos":
     filtered_news = [item for item in filtered_news if item.get("sentiment") == selected_sentiment]
 
-# Renderizado de Tarjeta de Noticia
-def render_ai_news_card(item: dict, key_prefix: str = "feed"):
+# Función para renderizar tarjeta Vademecum
+def render_vademecum_card(item: dict, key_prefix: str = "feed"):
     is_robotics = item.get("category") == "ROBÓTICA & EMBODIED AI"
-    card_class = "news-card-container news-card-robotics" if is_robotics else "news-card-container"
+    card_class = "vademecum-card vademecum-card-robotics" if is_robotics else "vademecum-card"
     category_badge_class = "badge-robotics-category" if is_robotics else "badge-category"
     
     sentiment = item.get("sentiment", "Innovación")
@@ -684,9 +758,9 @@ def render_ai_news_card(item: dict, key_prefix: str = "feed"):
     c_card, c_action = st.columns([0.88, 0.12])
     with c_card:
         hashtags_display = ' '.join(item.get('hashtags', [])) if isinstance(item.get('hashtags'), list) else ""
-        action_btn_style = "text-decoration: none; font-weight: 700; color: #00d2ff; font-size: 0.88rem; background: rgba(0, 210, 255, 0.1); padding: 6px 14px; border-radius: 8px; border: 1px solid rgba(0, 210, 255, 0.25);" if is_dark else "text-decoration: none; font-weight: 700; color: #0284c7; font-size: 0.88rem; background: #e0f2fe; padding: 6px 14px; border-radius: 8px; border: 1px solid #7dd3fc;"
-        tag_color = "#00d2ff" if is_dark else "#0284c7"
-        date_color = "#94a3b8" if is_dark else "#64748b"
+        action_btn_style = "text-decoration: none; font-weight: 700; color: #c9a227; font-size: 0.88rem; background: rgba(201, 162, 39, 0.12); padding: 6px 14px; border-radius: 8px; border: 1px solid rgba(201, 162, 39, 0.35);" if is_dark else "text-decoration: none; font-weight: 700; color: #b08a1c; font-size: 0.88rem; background: #fdfaf2; padding: 6px 14px; border-radius: 8px; border: 1px solid #d4af37;"
+        tag_color = "#c9a227" if is_dark else "#b08a1c"
+        date_color = "#a8a29e" if is_dark else "#78716c"
         
         st.markdown(f"""
         <div class="{card_class}">
@@ -696,7 +770,7 @@ def render_ai_news_card(item: dict, key_prefix: str = "feed"):
                     <span class="{category_badge_class}">⚡ {item.get('category', 'IA')}</span>
                     <span class="{tone_badge_class}">{item.get('sentiment_badge', '🚀 Innovación')}</span>
                 </div>
-                <div style="font-size: 0.82rem; color: {date_color}; font-weight: 600;">
+                <div style="font-size: 0.82rem; color: {date_color}; font-weight: 600; font-family: 'IBM Plex Mono', monospace;">
                     📅 {item.get('date', today_date_str)}
                 </div>
             </div>
@@ -722,108 +796,106 @@ def render_ai_news_card(item: dict, key_prefix: str = "feed"):
         
     with c_action:
         st.markdown("<div style='height: 24px;'></div>", unsafe_allow_html=True)
-        btn_key = f"fav_btn_{key_prefix}_{item['id']}"
+        btn_key = f"vademecum_fav_{key_prefix}_{item['id']}"
         if st.button(fav_icon, key=btn_key, use_container_width=True):
             if is_fav:
                 db.remove_favorite(item["id"])
                 st.session_state["favorites"].remove(item["id"])
-                st.toast(f"Artículo eliminado de favoritos", icon="🗑️")
+                st.toast(f"Artículo eliminado de guardados", icon="🗑️")
             else:
                 db.add_favorite(item["id"])
                 st.session_state["favorites"].append(item["id"])
-                st.toast(f"Artículo guardado en favoritos", icon="⭐")
+                st.toast(f"Artículo guardado en Vademecum", icon="⭐")
             st.rerun()
 
-# PESTAÑA 1: FEED DE NOTICIAS
+# PESTAÑA 1: RADAR VADEMECUM
 with tab_feed:
-    st.markdown(f"#### 📡 Mostrando **{len(filtered_news)}** novedades tecnológicas")
+    st.markdown(f"#### 📡 **{len(filtered_news)}** novedades tecnológicas en el Radar")
     if not filtered_news:
-        st.info("No se han encontrado noticias que coincidan con los filtros seleccionados.")
+        st.info("No se han encontrado novedades que coincidan con los filtros seleccionados.")
     else:
         for item in filtered_news:
-            render_ai_news_card(item, key_prefix="main_feed")
+            render_vademecum_card(item, key_prefix="main_feed")
 
-# PESTAÑA 2: ASISTENTE CONSULTORÍA (CHAT RAG)
+# PESTAÑA 2: ASISTENTE VADEMECUM (CHAT RAG)
 with tab_chat:
-    st.markdown("### 🤖 Asistente Estratégico de Consultoría de IA & Robótica")
-    st.markdown("Formula preguntas sobre modelos de lenguaje, infraestructura de cómputo, directivas regulatorias o robótica humanoide con base en las noticias capturadas.")
+    st.markdown("### 🤖 Asistente de Consultoría Vademecum Hub")
+    st.markdown("Analiza la colección de noticias para resolver dudas técnicas, comparar arquitecturas de modelos o evaluar impacto de negocio para clientes de consultoría.")
     
-    # Preguntas sugeridas
     col_q1, col_q2 = st.columns(2)
     with col_q1:
-        if st.button("🦾 ¿Qué avances recientes hay en robots humanoides y manipulación?", use_container_width=True, key="btn_sug_1"):
+        if st.button("🦾 ¿Qué avances recientes hay en robots humanoides y manipulación?", use_container_width=True, key="vad_sug_1"):
             st.session_state["chat_history"].append({"role": "user", "text": "¿Qué avances recientes hay en robots humanoides y manipulación industrial?"})
-            with st.spinner("Analizando fuentes del feed con Gemini AI..."):
+            with st.spinner("Consultando fuentes con Gemini AI..."):
                 ans = enricher.ask_feed("¿Qué avances recientes hay en robots humanoides y manipulación industrial?", news_data)
                 st.session_state["chat_history"].append({"role": "assistant", "text": ans})
                 st.rerun()
-        if st.button("💻 ¿Cuáles son las novedades en GPUs, clusters y hardware NVIDIA?", use_container_width=True, key="btn_sug_2"):
+        if st.button("💻 ¿Cuáles son las novedades en GPUs, clusters y hardware NVIDIA?", use_container_width=True, key="vad_sug_2"):
             st.session_state["chat_history"].append({"role": "user", "text": "¿Cuáles son las novedades en GPUs, clusters y hardware NVIDIA?"})
-            with st.spinner("Analizando fuentes del feed con Gemini AI..."):
+            with st.spinner("Consultando fuentes con Gemini AI..."):
                 ans = enricher.ask_feed("¿Cuáles son las novedades en GPUs, clusters y hardware NVIDIA?", news_data)
                 st.session_state["chat_history"].append({"role": "assistant", "text": ans})
                 st.rerun()
     with col_q2:
-        if st.button("🛠️ ¿Cómo impacta Model Context Protocol (MCP) en arquitecturas de agentes?", use_container_width=True, key="btn_sug_3"):
+        if st.button("🛠️ ¿Cómo impacta Model Context Protocol (MCP) en arquitecturas de agentes?", use_container_width=True, key="vad_sug_3"):
             st.session_state["chat_history"].append({"role": "user", "text": "¿Cómo impacta Model Context Protocol (MCP) en arquitecturas de agentes?"})
-            with st.spinner("Analizando fuentes del feed con Gemini AI..."):
+            with st.spinner("Consultando fuentes con Gemini AI..."):
                 ans = enricher.ask_feed("¿Cómo impacta Model Context Protocol (MCP) en arquitecturas de agentes?", news_data)
                 st.session_state["chat_history"].append({"role": "assistant", "text": ans})
                 st.rerun()
-        if st.button("⚖️ ¿Qué requisitos exige el EU AI Act para sistemas en clientes corporativos?", use_container_width=True, key="btn_sug_4"):
+        if st.button("⚖️ ¿Qué requisitos exige el EU AI Act para sistemas en clientes corporativos?", use_container_width=True, key="vad_sug_4"):
             st.session_state["chat_history"].append({"role": "user", "text": "¿Qué requisitos exige el EU AI Act para sistemas en clientes corporativos?"})
-            with st.spinner("Analizando fuentes del feed con Gemini AI..."):
+            with st.spinner("Consultando fuentes con Gemini AI..."):
                 ans = enricher.ask_feed("¿Qué requisitos exige el EU AI Act para sistemas en clientes corporativos?", news_data)
                 st.session_state["chat_history"].append({"role": "assistant", "text": ans})
                 st.rerun()
 
     st.markdown("---")
     
-    # Historial de conversación
     for msg in st.session_state["chat_history"]:
         if msg["role"] == "user":
-            st.markdown(f"**👤 Consultor:** {msg['text']}")
+            st.markdown(f"**👤 Consultor Vademecum:** {msg['text']}")
         else:
             st.markdown(msg['text'])
             st.markdown("---")
             
-    user_query = st.text_input("💬 Consulta técnica o estratégica:", placeholder="Ej. ¿Qué modelos de código abierto son más eficientes para despliegue local?", key="rag_user_input")
-    if st.button("Enviar Consulta", type="primary", key="btn_send_rag"):
+    user_query = st.text_input("💬 Consulta estratégica o técnica:", placeholder="Ej. ¿Qué modelos son más recomendables para despliegue local en banca o sanidad?", key="vad_rag_input")
+    if st.button("Consultar Asistente Vademecum", type="primary", key="vad_btn_send"):
         if user_query.strip():
             st.session_state["chat_history"].append({"role": "user", "text": user_query})
-            with st.spinner("Evaluando feed y generando dictamen técnico..."):
+            with st.spinner("Analizando con Gemini AI..."):
                 ans = enricher.ask_feed(user_query, news_data)
                 st.session_state["chat_history"].append({"role": "assistant", "text": ans})
                 st.rerun()
 
 # PESTAÑA 3: MIS FAVORITOS
 with tab_favorites:
-    st.markdown("### ⭐ Artículos de IA Guardados para Análisis")
+    st.markdown("### ⭐ Artículos Guardados en Vademecum")
     fav_items = [item for item in news_data if item["id"] in st.session_state["favorites"]]
     if not fav_items:
-        st.info("Aún no tienes artículos guardados. Pulsa en el botón '☆ Guardar' de cualquier tarjeta para agregarlo a esta lista.")
+        st.info("Aún no tienes artículos guardados. Pulsa en '☆ Guardar' en cualquier tarjeta para agregarlo a tu dossier.")
     else:
-        st.markdown(f"Tienes **{len(fav_items)} artículos** marcados:")
+        st.markdown(f"Tienes **{len(fav_items)} artículos** guardados:")
         for item in fav_items:
-            render_ai_news_card(item, key_prefix="fav_tab")
+            render_vademecum_card(item, key_prefix="fav_tab")
 
-# PESTAÑA 4: MORNING AI BRIEFING
+# PESTAÑA 4: MORNING BRIEFING
 with tab_digest:
-    st.markdown("### 📝 Generador de Morning AI Briefing Ejecutivo")
-    st.markdown("Compila instantáneamente un informe diario en formato Markdown para compartir en canales de Slack, Teams o preparar la reunión diaria del equipo de consultoría.")
+    st.markdown("### 📝 Vademecum Daily AI Briefing")
+    st.markdown("Genera un informe ejecutivo matinal estructurado en Markdown para el equipo de consultoría y clientes.")
     
-    if st.button("⚡ Generar Informe de Hoy", type="primary", key="btn_gen_digest"):
-        with st.spinner("Compilando análisis de novedades de IA y Robótica..."):
+    if st.button("⚡ Compilar Daily Briefing de Hoy", type="primary", key="vad_btn_gen_digest"):
+        with st.spinner("Compilando análisis ejecutivo de IA y Robótica..."):
             digest_content = enricher.generate_daily_digest(news_data)
             st.session_state["generated_digest"] = digest_content
             
     if "generated_digest" in st.session_state:
         st.markdown("---")
         st.download_button(
-            label="📥 Descargar Briefing (.md)",
+            label="📥 Descargar Vademecum Briefing (.md)",
             data=st.session_state["generated_digest"],
-            file_name=f"morning_ai_briefing_{datetime.now().strftime('%Y%m%d')}.md",
+            file_name=f"vademecum_briefing_{datetime.now().strftime('%Y%m%d')}.md",
             mime="text/markdown",
-            key="btn_download_digest"
+            key="vad_btn_download_digest"
         )
         st.markdown(st.session_state["generated_digest"])
